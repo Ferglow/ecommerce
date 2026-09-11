@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface CartItem {
   id: number;
@@ -16,7 +17,9 @@ interface CartState {
   count: () => number;
 }
 
-export const useCart = create<CartState>((set, get) => ({
+export const useCart = create<CartState>()(
+  persist(
+    (set, get) => ({
   items: [],
   add: (p) =>
     set((s) => {
@@ -34,4 +37,7 @@ export const useCart = create<CartState>((set, get) => ({
   clear: () => set({ items: [] }),
   total: () => get().items.reduce((acc, i) => acc + i.precio * i.cantidad, 0),
   count: () => get().items.reduce((acc, i) => acc + i.cantidad, 0),
-}));
+    }),
+    { name: 'mitienda-carrito' }
+  )
+);

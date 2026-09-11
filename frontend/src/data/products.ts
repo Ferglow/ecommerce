@@ -18,4 +18,5 @@ export const products: Product[] = [
   { id: 6, nombre: 'Mochila Viajera 25L', precio: 79, categoria: 'ropa', imagen: '🎒', stock: 15, descripcion: 'Lleva tu laptop segura' },
   { id: 7, nombre: 'Café Grano 1kg', precio: 18, categoria: 'hogar', imagen: '☕', stock: 60, descripcion: 'Combustible de programador' },
   { id: 8, nombre: 'Lámpara LED Escritorio', precio: 35, categoria: 'hogar', imagen: '💡', stock: 20, descripcion: 'Cuida tu vista' },
+  {id: 8, nombre: 'Celular Iphone 15ProMax', precio: 25, categoria: 'tech', imagen: '📱', stock: 10, descripcion: "Estetica de 9.5"},
 ];

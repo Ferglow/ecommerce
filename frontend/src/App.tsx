@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams } from 'react-router-dom';
-import { products } from './data/products';
+import { useProducto, useProductos } from './hooks/useProducts';
 import { useCart } from './store/cartStore';
 
 const CATEGORIAS = ['todas', 'tech', 'ropa', 'hogar'] as const;
@@ -20,12 +20,55 @@ function Navbar() {
   );
 }
 
+function Cargando({ mensaje }: { mensaje: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border bg-white p-6 text-slate-500">
+      <span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+      {mensaje}
+    </div>
+  );
+}
+
+function ErrorApi({ mensaje, onRetry }: { mensaje: string; onRetry: () => void }) {
+  return (
+    <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+      <p>{mensaje}</p>
+      <button
+        onClick={onRetry}
+        className="mt-3 rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+      >
+        Reintentar
+      </button>
+    </div>
+  );
+}
+
 function Catalogo() {
   const add = useCart((s) => s.add);
+  const { data: products, loading, error, retry } = useProductos();
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>('todas');
 
-  const filtrados = products.filter(
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-5xl p-6">
+        <h1 className="mb-4 text-3xl font-bold">Catálogo</h1>
+        <Cargando mensaje="Cargando productos desde la API..." />
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="mx-auto max-w-5xl p-6">
+        <h1 className="mb-4 text-3xl font-bold">Catálogo</h1>
+        <ErrorApi mensaje={error} onRetry={retry} />
+      </main>
+    );
+  }
+
+  const lista = products ?? [];
+  const filtrados = lista.filter(
     (p) =>
       p.nombre.toLowerCase().includes(busqueda.toLowerCase()) &&
       (categoria === 'todas' || p.categoria === categoria)
@@ -81,9 +124,40 @@ function Catalogo() {
 function Detalle() {
   const { id } = useParams();
   const add = useCart((s) => s.add);
-  const p = products.find((x) => x.id === Number(id));
+  const productoId = Number(id);
+  const { data: p, loading, error, retry } = useProducto(
+    Number.isFinite(productoId) ? productoId : undefined
+  );
 
-  if (!p) return <p className="p-6">Producto no encontrado. <Link to="/" className="underline">Volver</Link></p>;
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-3xl p-6">
+        <Link to="/" className="text-sm text-violet-600 underline">← Volver al catálogo</Link>
+        <div className="mt-4">
+          <Cargando mensaje="Cargando producto..." />
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="mx-auto max-w-3xl p-6">
+        <Link to="/" className="text-sm text-violet-600 underline">← Volver al catálogo</Link>
+        <div className="mt-4">
+          <ErrorApi mensaje={error} onRetry={retry} />
+        </div>
+      </main>
+    );
+  }
+
+  if (!p) {
+    return (
+      <p className="p-6">
+        Producto no encontrado. <Link to="/" className="underline">Volver</Link>
+      </p>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-3xl p-6">

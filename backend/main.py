@@ -39,6 +39,7 @@ def listar_productos(db: Session = Depends(get_db)):
 
 @app.get("/productos/{producto_id}", response_model=Producto)
 def obtener_producto(producto_id: int, db: Session = Depends(get_db)):
+    producto = db.get(ProductoDB, producto_id)
     if producto is None:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     return producto

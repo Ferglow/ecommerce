@@ -1,7 +1,7 @@
 from db import Base, SessionLocal, engine
 from models import ProductoDB
 
-Productos = [
+PRODUCTOS = [
     {"id": 1, "nombre": 'Laptop Dev Pro 14"', "precio": 1299, "categoria": "tech", "imagen": "💻", "stock": 10, "descripcion": "Ideal para programar Fullstack"},
     {"id": 2, "nombre": "Auriculares Noise-Cancel", "precio": 199, "categoria": "tech", "imagen": "🎧", "stock": 25, "descripcion": "Para concentrarte 6h al día"},
     {"id": 3, "nombre": "Teclado Mecánico RGB", "precio": 89, "categoria": "tech", "imagen": "⌨️", "stock": 30, "descripcion": "Táctil y rápido"},
@@ -24,5 +24,5 @@ def seed():
     print(f"Insertados {len (PRODUCTOS)} productos.")
 
 
-if __name__ == "__name__":
+if __name__ == "__main__":
     seed()    

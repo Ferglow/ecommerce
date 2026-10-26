@@ -10,5 +10,6 @@ class ProductoDB(Base):
     nombre: Mapped[str] = mapped_column(String, nullable=False)
     precio: Mapped[float] = mapped_column(Float, nullable=False)
     categoria: Mapped[str] = mapped_column(String, nullable=False)
+    imagen: Mapped[str] = mapped_column(String, nullable=False)
     stock: Mapped[int] = mapped_column(Integer, default=0)
-    descripcion: Mapped[str] = mapped_column(String, default=0)
+    descripcion: Mapped[str] = mapped_column(String, default="")

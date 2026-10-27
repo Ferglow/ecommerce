@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from db import Base, engine, get_db
 from models import ProductoDB
 from schemas import Producto
+from models import PedidoDB, PedidoItemDB, ProductoDB
+
 
 Base.metadata.create_all(bind=engine)
 

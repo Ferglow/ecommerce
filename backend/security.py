@@ -1,7 +1,7 @@
 import os
 from datetime import UTC, datetime, timedelta
 import jwt
-from pwlib import PasswordHash
+from pwdlib import PasswordHash
 
 password_hasher = PasswordHash.recommended()
 

@@ -44,4 +44,25 @@ class PedidoSalida(BaseModel):
     creado_en: datetime
     items: list[PedidoItemSalida]
 
+class UsuarioRegistro(BaseModel):
+    nombre: str = Field(min_length=2, max_length=100)
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
 
+class UsuarioLogin(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
+
+class UsuarioSalida(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nombre: str
+    email: EmailStr
+    rol: str
+    activo: bool
+
+class TokenSalida(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    usuario: UsuarioSalida

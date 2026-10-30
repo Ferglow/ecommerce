@@ -2,9 +2,10 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from db import Base, engine, get_db
-from schemas import Producto, PedidoEntrada, PedidoSalida
+from schemas import Producto, PedidoEntrada, PedidoSalida, UsuarioRegistro, UsuarioSalida
 from models import PedidoDB, PedidoItemDB, ProductoDB, UsuarioDB
 from decimal import Decimal
+from security import hash_password, verify_password, create_access_token
 
 Base.metadata.create_all(bind=engine)
 
@@ -100,3 +101,25 @@ def crear_pedido(datos: PedidoEntrada, db: Session = Depends(get_db)):
         raise
 
     return pedido
+
+@app.post("/auth/registro", response_model=UsuarioSalida, status_code=status.HTTP_201_CREATED)
+def registrar_usuario(datos: UsuarioRegistro, db: Session = Depends(get_db)):
+    existente = db.query(UsuarioDB).filter(UsuarioDB.email == datos.email).first()
+    if existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El email ya está registrado",
+        )
+
+    nuevo_usuario = UsuarioDB(
+        nombre=datos.nombre,
+        email=datos.email,
+        password_hash=hash_password(datos.password),
+        rol="cliente",
+        activo=True,
+    )
+
+    db.add(nuevo_usuario)
+    db.commit()
+    db.refresh(nuevo_usuario)
+    return nuevo_usuario

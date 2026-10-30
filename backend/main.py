@@ -2,9 +2,8 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from db import Base, engine, get_db
-from models import ProductoDB
 from schemas import Producto, PedidoEntrada, PedidoSalida
-from models import PedidoDB, PedidoItemDB, ProductoDB
+from models import PedidoDB, PedidoItemDB, ProductoDB, UsuarioDB
 from decimal import Decimal
 
 Base.metadata.create_all(bind=engine)

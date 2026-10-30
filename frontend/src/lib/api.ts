@@ -39,9 +39,14 @@ export async function crearPedido(datos: {
   email_cliente: string;
   items: { producto_id: number; cantidad: number }[];
 }): Promise<PedidoCreado> {
+  const token = localStorage.getItem('mitienda_token');
+
   const response = await fetch(`${API_URL}/pedidos`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(datos),
   });
 
@@ -56,4 +61,48 @@ export async function crearPedido(datos: {
   }
 
   return resultado as PedidoCreado;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface RegistroInput {
+  nombre: string;
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  usuario: {
+    id: number;
+    nombre: string;
+    email: string;
+    rol: string;
+    activo: boolean;
+  };
+}
+
+export async function loginUsuario(datos: LoginInput): Promise<AuthResponse> {
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Error al iniciar sesión');
+  return data;
+}
+
+export async function registrarUsuario(datos: RegistroInput): Promise<void> {
+  const res = await fetch(`${API_URL}/auth/registro`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Error al registrarse');
 }

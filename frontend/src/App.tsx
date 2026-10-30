@@ -1,17 +1,28 @@
-import { useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, useParams } from 'react-router-dom';
-import { useProducto, useProductos } from './hooks/useProducts';
-import { useCart } from './store/cartStore';
+import { useState, type FormEvent } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  useParams,
+} from "react-router-dom";
+import { useProducto, useProductos } from "./hooks/useProducts";
+import { useCart } from "./store/cartStore";
+import { crearPedido, type PedidoCreado } from "./lib/api";
 
-const CATEGORIAS = ['todas', 'tech', 'ropa', 'hogar'] as const;
+const CATEGORIAS = ["todas", "tech", "ropa", "hogar"] as const;
 
 function Navbar() {
   const count = useCart((s) => s.count());
   return (
     <nav className="flex items-center justify-between bg-slate-900 px-6 py-4 text-white">
-      <Link to="/" className="text-xl font-bold">🛒 MiTienda</Link>
+      <Link to="/" className="text-xl font-bold">
+        🛒 MiTienda
+      </Link>
       <div className="flex gap-4">
-        <Link to="/" className="hover:text-violet-300">Catálogo</Link>
+        <Link to="/" className="hover:text-violet-300">
+          Catálogo
+        </Link>
         <Link to="/carrito" className="hover:text-violet-300">
           Carrito ({count})
         </Link>
@@ -29,7 +40,13 @@ function Cargando({ mensaje }: { mensaje: string }) {
   );
 }
 
-function ErrorApi({ mensaje, onRetry }: { mensaje: string; onRetry: () => void }) {
+function ErrorApi({
+  mensaje,
+  onRetry,
+}: {
+  mensaje: string;
+  onRetry: () => void;
+}) {
   return (
     <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
       <p>{mensaje}</p>
@@ -46,8 +63,9 @@ function ErrorApi({ mensaje, onRetry }: { mensaje: string; onRetry: () => void }
 function Catalogo() {
   const add = useCart((s) => s.add);
   const { data: products, loading, error, retry } = useProductos();
-  const [busqueda, setBusqueda] = useState('');
-  const [categoria, setCategoria] = useState<(typeof CATEGORIAS)[number]>('todas');
+  const [busqueda, setBusqueda] = useState("");
+  const [categoria, setCategoria] =
+    useState<(typeof CATEGORIAS)[number]>("todas");
 
   if (loading) {
     return (
@@ -71,7 +89,7 @@ function Catalogo() {
   const filtrados = lista.filter(
     (p) =>
       p.nombre.toLowerCase().includes(busqueda.toLowerCase()) &&
-      (categoria === 'todas' || p.categoria === categoria)
+      (categoria === "todas" || p.categoria === categoria),
   );
 
   return (
@@ -90,7 +108,7 @@ function Catalogo() {
               key={c}
               onClick={() => setCategoria(c)}
               className={`rounded-full px-4 py-2 text-sm ${
-                categoria === c ? 'bg-slate-900 text-white' : 'border bg-white'
+                categoria === c ? "bg-slate-900 text-white" : "border bg-white"
               }`}
             >
               {c}
@@ -102,10 +120,15 @@ function Catalogo() {
         {filtrados.map((p) => (
           <div key={p.id} className="rounded-xl border bg-white p-4 shadow-sm">
             <div className="text-5xl">{p.imagen}</div>
-            <Link to={`/producto/${p.id}`} className="mt-2 block font-semibold hover:text-violet-600">
+            <Link
+              to={`/producto/${p.id}`}
+              className="mt-2 block font-semibold hover:text-violet-600"
+            >
               {p.nombre}
             </Link>
-            <p className="text-sm text-slate-500">{p.descripcion} · stock: {p.stock}</p>
+            <p className="text-sm text-slate-500">
+              {p.descripcion} · stock: {p.stock}
+            </p>
             <p className="mt-1 text-lg font-bold">${p.precio}</p>
             <button
               onClick={() => add(p)}
@@ -116,7 +139,11 @@ function Catalogo() {
           </div>
         ))}
       </div>
-      {filtrados.length === 0 && <p className="mt-6">Sin resultados para "{busqueda}" en {categoria}</p>}
+      {filtrados.length === 0 && (
+        <p className="mt-6">
+          Sin resultados para "{busqueda}" en {categoria}
+        </p>
+      )}
     </main>
   );
 }
@@ -125,14 +152,19 @@ function Detalle() {
   const { id } = useParams();
   const add = useCart((s) => s.add);
   const productoId = Number(id);
-  const { data: p, loading, error, retry } = useProducto(
-    Number.isFinite(productoId) ? productoId : undefined
-  );
+  const {
+    data: p,
+    loading,
+    error,
+    retry,
+  } = useProducto(Number.isFinite(productoId) ? productoId : undefined);
 
   if (loading) {
     return (
       <main className="mx-auto max-w-3xl p-6">
-        <Link to="/" className="text-sm text-violet-600 underline">← Volver al catálogo</Link>
+        <Link to="/" className="text-sm text-violet-600 underline">
+          ← Volver al catálogo
+        </Link>
         <div className="mt-4">
           <Cargando mensaje="Cargando producto..." />
         </div>
@@ -143,7 +175,9 @@ function Detalle() {
   if (error) {
     return (
       <main className="mx-auto max-w-3xl p-6">
-        <Link to="/" className="text-sm text-violet-600 underline">← Volver al catálogo</Link>
+        <Link to="/" className="text-sm text-violet-600 underline">
+          ← Volver al catálogo
+        </Link>
         <div className="mt-4">
           <ErrorApi mensaje={error} onRetry={retry} />
         </div>
@@ -154,50 +188,138 @@ function Detalle() {
   if (!p) {
     return (
       <p className="p-6">
-        Producto no encontrado. <Link to="/" className="underline">Volver</Link>
+        Producto no encontrado.{" "}
+        <Link to="/" className="underline">
+          Volver
+        </Link>
       </p>
     );
   }
 
   return (
     <main className="mx-auto max-w-3xl p-6">
-      <Link to="/" className="text-sm text-violet-600 underline">← Volver al catálogo</Link>
+      <Link to="/" className="text-sm text-violet-600 underline">
+        ← Volver al catálogo
+      </Link>
       <div className="mt-4 rounded-xl border bg-white p-6">
         <div className="text-7xl">{p.imagen}</div>
         <h1 className="mt-2 text-3xl font-bold">{p.nombre}</h1>
-        <p className="text-slate-500">{p.categoria} · stock: {p.stock}</p>
+        <p className="text-slate-500">
+          {p.categoria} · stock: {p.stock}
+        </p>
         <p className="mt-2">{p.descripcion}</p>
         <p className="mt-3 text-2xl font-bold">${p.precio}</p>
-        <button onClick={() => add(p)} className="mt-4 rounded bg-violet-600 px-6 py-2 text-white">
+        <button
+          onClick={() => add(p)}
+          className="mt-4 rounded bg-violet-600 px-6 py-2 text-white"
+        >
           Añadir al carrito
         </button>
       </div>
     </main>
   );
 }
-
+// Estados van guardando lo que va ocurriendo formulario, envio en curso, error o pedido
 function Carrito() {
   const { items, total, remove, clear } = useCart();
-  const totalValor = useCart((s) => s.total)();
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState("");
+  const [pedido, setPedido] = useState<PedidoCreado | null>(null);
 
-  if (items.length === 0) return <p className="p-6">Carrito vacío. <Link to="/" className="text-violet-600 underline">Volver</Link></p>;
+  async function enviarPedido(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setEnviando(true);
+    setError("");
 
+    try {
+      const creado = await crearPedido({
+        nombre_cliente: nombre,
+        email_cliente: email,
+        items: items.map((item) => ({
+          producto_id: item.id,
+          cantidad: item.cantidad,
+        })),
+      });
+
+      setPedido(creado);
+      clear();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "No se pudo crear el pedido",
+      );
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  if (pedido) {
+    return (
+      <main className="mx-auto max-w-3xl p-6">
+        <h1 className="text-2xl font-bold">¡Pedido creado!</h1>
+        <p>Número: {pedido.id}</p>
+        <p>Total confirmado por el servidor: ${pedido.total}</p>
+        <p>Estado: {pedido.estado}</p>
+        <Link to="/" className="mt-4 inline-block text-violet-600 underline"> Volver al catalogo         
+        </Link>
+      </main>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <p className="p-6">
+        Carrito vacio. <Link to="/" className="text-violet-600 underline">Volver</Link>
+      </p>
+    );
+  }
   return (
     <main className="mx-auto max-w-3xl p-6">
-      <h1 className="mb-4 text-2xl font-bold">Tu carrito (se guarda solo)</h1>
-      {items.map((i) => (
-        <div key={i.id} className="mb-2 flex items-center justify-between rounded border bg-white p-3">
-          <span>{i.nombre} x{i.cantidad} — ${i.precio * i.cantidad}</span>
-          <button onClick={() => remove(i.id)} className="text-red-600">Quitar</button>
+      <h1 className="mb-4 text-2xl font-bold">Tu carrito</h1>
+
+      {items.map((item) => (
+        <div key={item.id} className="mb-2 flex items-center justify-between rounded border bg-white p-3">
+          <span>{item.nombre} x{item.cantidad} — ${item.precio * item.cantidad}</span>
+          <button onClick={() => remove(item.id)} className="text-red-600">Quitar</button>
         </div>
       ))}
-      <p className="mt-4 text-xl font-bold">Total: ${totalValor}</p>
-      <div className="mt-4 flex gap-2">
-        <button onClick={clear} className="rounded border px-4 py-2">Vaciar</button>
-        <button onClick={() => alert(`Pedido simulado por $${total()}`)} className="rounded bg-green-600 px-4 py-2 text-white">
-          Checkout simulado
+
+      <p className="mt-4 text-xl font-bold">Total estimado: ${total()}</p>
+
+      <form onSubmit={enviarPedido} className="mt-6 grid gap-3">
+        <label>
+          Nombre
+          <input
+            required
+            minLength={2}
+            value={nombre}
+            onChange={(event) => setNombre(event.target.value)}
+            className="block w-full rounded border px-3 py-2"
+          />
+        </label>
+
+        <label>
+          Email
+          <input
+            required
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="block w-full rounded border px-3 py-2"
+          />
+        </label>
+
+        {error && <p className="text-red-600">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={enviando}
+          className="rounded bg-green-600 px-4 py-2 text-white disabled:opacity-50"
+        >
+          {enviando ? 'Enviando pedido...' : 'Crear pedido'}
         </button>
-      </div>
+      </form>
     </main>
   );
 }

@@ -2,10 +2,10 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from db import Base, engine, get_db
-from schemas import Producto, PedidoEntrada, PedidoSalida, UsuarioRegistro, UsuarioSalida
+from schemas import Producto, PedidoEntrada, PedidoSalida, UsuarioRegistro, UsuarioSalida, UsuarioLogin, TokenSalida
 from models import PedidoDB, PedidoItemDB, ProductoDB, UsuarioDB
 from decimal import Decimal
-from security import hash_password, verify_password, create_access_token
+from security import hash_password, verify_password, create_access_token, get_current_user
 
 Base.metadata.create_all(bind=engine)
 
@@ -44,7 +44,7 @@ def obtener_producto(producto_id: int, db: Session = Depends(get_db)):
     return producto
 
 @app.post("/pedidos", response_model=PedidoSalida, status_code=status.HTTP_201_CREATED)
-def crear_pedido(datos: PedidoEntrada, db: Session = Depends(get_db)):
+def crear_pedido(datos: PedidoEntrada, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
     cantidades = {}
     for item in datos.items:
         cantidades[item.producto_id] = (
@@ -123,3 +123,27 @@ def registrar_usuario(datos: UsuarioRegistro, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(nuevo_usuario)
     return nuevo_usuario
+
+@app.post("/auth/login", response_model=TokenSalida)
+def iniciar_sesion(datos: UsuarioLogin, db: Session = Depends(get_db)):
+    usuario = db.query(UsuarioDB).filter(UsuarioDB.email == datos.email).first()
+    
+    if not usuario or not verify_password(datos.password, usuario.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email o contraseña incorrectos",
+        )
+    
+    if not usuario.activo:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario inactivo",
+        )
+
+    token = create_access_token(usuario.id, usuario.rol)
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "usuario": usuario,
+    }

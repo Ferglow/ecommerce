@@ -66,3 +66,14 @@ class TokenSalida(BaseModel):
     access_token: str
     token_type: str = "bearer"
     usuario: UsuarioSalida
+
+# Panel de administracion
+
+class ProductoCrear(BaseModel):
+    nombre: str = Field(min_length=2, max_length=100)
+    precio: float = Field(gt=0)
+    categoria: str = Field(min_length=2, max_length=50)
+    imagen: str = Field(default="📦")
+    stock: int = Field(ge=0, default=0)
+    descripcion: str = Field(default="")
+

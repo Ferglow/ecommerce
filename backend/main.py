@@ -2,10 +2,10 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from db import Base, engine, get_db
-from schemas import Producto, PedidoEntrada, PedidoSalida, UsuarioRegistro, UsuarioSalida, UsuarioLogin, TokenSalida
+from schemas import Producto, PedidoEntrada, PedidoSalida, UsuarioRegistro, UsuarioSalida, UsuarioLogin, TokenSalida, ProductoCrear
 from models import PedidoDB, PedidoItemDB, ProductoDB, UsuarioDB
 from decimal import Decimal
-from security import hash_password, verify_password, create_access_token, get_current_user
+from security import hash_password, verify_password, create_access_token, get_current_user, require_admin
 
 Base.metadata.create_all(bind=engine)
 
@@ -147,3 +147,27 @@ def iniciar_sesion(datos: UsuarioLogin, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "usuario": usuario,
     }
+
+@app.post("/admin/productos", response_model=Producto, status_code=status.HTTP_201_CREATED)
+def admin_crear_producto(
+    datos: ProductoCrear,
+    db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+):
+    nuevo = ProductoDB(**datos.model_dump())
+    db.add(nuevo)
+    db.commit()
+    db.refresh(nuevo)
+    return nuevo
+
+@app.delete("/admin/productos/{producto_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_eliminar_producto(
+    producto_id: int,
+    db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+):
+    producto = db.get(ProductoDB, producto_id)
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    db.delete(producto)
+    db.commit()

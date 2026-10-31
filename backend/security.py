@@ -57,5 +57,5 @@ def require_admin(usuario=Depends(get_current_user)):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Se requiere rol admin",
         )
-    return usuari
+    return usuario
 

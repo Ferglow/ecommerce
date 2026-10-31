@@ -9,23 +9,49 @@ import {
 import { useProducto, useProductos } from "./hooks/useProducts";
 import { useCart } from "./store/cartStore";
 import { crearPedido, type PedidoCreado } from "./lib/api";
+import { useAuth } from "./store/authStore";
+import { loginUsuario, registrarUsuario } from "./lib/api";
+import { useNavigate } from "react-router-dom";
 
 const CATEGORIAS = ["todas", "tech", "ropa", "hogar"] as const;
-
+//Componentes
 function Navbar() {
   const count = useCart((s) => s.count());
+  const { usuario, logout } = useAuth();
   return (
     <nav className="flex items-center justify-between bg-slate-900 px-6 py-4 text-white">
       <Link to="/" className="text-xl font-bold">
         🛒 MiTienda
       </Link>
-      <div className="flex gap-4">
+      <div className="flex items-center gap-4">
         <Link to="/" className="hover:text-violet-300">
           Catálogo
         </Link>
         <Link to="/carrito" className="hover:text-violet-300">
           Carrito ({count})
         </Link>
+        {usuario ? (
+          <>
+            <span className="text-sm text-violet-300">
+              Hola, {usuario.nombre}
+            </span>
+            <button
+              onClick={logout}
+              className="rounded bg-red-600 px-3 py-1 text-xs"
+            >
+              Salir
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="hover:text-violet-300">
+              Entrar
+            </Link>
+            <Link to="/registro" className="hover:text-violet-300">
+              Registro
+            </Link>
+          </>
+        )}
       </div>
     </nav>
   );
@@ -261,7 +287,9 @@ function Carrito() {
         <p>Número: {pedido.id}</p>
         <p>Total confirmado por el servidor: ${pedido.total}</p>
         <p>Estado: {pedido.estado}</p>
-        <Link to="/" className="mt-4 inline-block text-violet-600 underline"> Volver al catalogo         
+        <Link to="/" className="mt-4 inline-block text-violet-600 underline">
+          {" "}
+          Volver al catalogo
         </Link>
       </main>
     );
@@ -270,7 +298,10 @@ function Carrito() {
   if (items.length === 0) {
     return (
       <p className="p-6">
-        Carrito vacio. <Link to="/" className="text-violet-600 underline">Volver</Link>
+        Carrito vacio.{" "}
+        <Link to="/" className="text-violet-600 underline">
+          Volver
+        </Link>
       </p>
     );
   }
@@ -279,9 +310,16 @@ function Carrito() {
       <h1 className="mb-4 text-2xl font-bold">Tu carrito</h1>
 
       {items.map((item) => (
-        <div key={item.id} className="mb-2 flex items-center justify-between rounded border bg-white p-3">
-          <span>{item.nombre} x{item.cantidad} — ${item.precio * item.cantidad}</span>
-          <button onClick={() => remove(item.id)} className="text-red-600">Quitar</button>
+        <div
+          key={item.id}
+          className="mb-2 flex items-center justify-between rounded border bg-white p-3"
+        >
+          <span>
+            {item.nombre} x{item.cantidad} — ${item.precio * item.cantidad}
+          </span>
+          <button onClick={() => remove(item.id)} className="text-red-600">
+            Quitar
+          </button>
         </div>
       ))}
 
@@ -317,7 +355,127 @@ function Carrito() {
           disabled={enviando}
           className="rounded bg-green-600 px-4 py-2 text-white disabled:opacity-50"
         >
-          {enviando ? 'Enviando pedido...' : 'Crear pedido'}
+          {enviando ? "Enviando pedido..." : "Crear pedido"}
+        </button>
+      </form>
+    </main>
+  );
+}
+
+function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const setAuth = useAuth((s) => s.setAuth);
+  const navigate = useNavigate();
+
+  async function handleLogin(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    try {
+      const res = await loginUsuario({ email, password });
+      setAuth(res.access_token, res.usuario);
+      navigate("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al iniciar sesión");
+    }
+  }
+
+  return (
+    <main className="mx-auto max-w-md p-6">
+      <h1 className="mb-4 text-2xl font-bold">Iniciar Sesión</h1>
+      <form onSubmit={handleLogin} className="grid gap-3">
+        <label>
+          Email{" "}
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="block w-full rounded border px-3 py-2"
+          />
+        </label>
+        <label>
+          Contraseña{" "}
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="block w-full rounded border px-3 py-2"
+          />
+        </label>
+        {error && <p className="text-red-600">{error}</p>}
+        <button
+          type="submit"
+          className="rounded bg-violet-600 px-4 py-2 text-white"
+        >
+          Entrar
+        </button>
+      </form>
+    </main>
+  );
+}
+
+function Registro() {
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  async function handleRegistro(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    try {
+      await registrarUsuario({ nombre, email, password });
+      alert("¡Registro exitoso! Inicia sesión.");
+      navigate("/login");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error en el registro");
+    }
+  }
+
+  return (
+    <main className="mx-auto max-w-md p-6">
+      <h1 className="mb-4 text-2xl font-bold">Crear Cuenta</h1>
+      <form onSubmit={handleRegistro} className="grid gap-3">
+        <label>
+          Nombre{" "}
+          <input
+            required
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            className="block w-full rounded border px-3 py-2"
+          />
+        </label>
+        <label>
+          Email{" "}
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="block w-full rounded border px-3 py-2"
+          />
+        </label>
+        <label>
+          Contraseña (mín. 8 caracteres){" "}
+          <input
+            type="password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="block w-full rounded border px-3 py-2"
+          />
+        </label>
+        {error && <p className="text-red-600">{error}</p>}
+        <button
+          type="submit"
+          className="rounded bg-violet-600 px-4 py-2 text-white"
+        >
+          Registrarse
         </button>
       </form>
     </main>
@@ -332,6 +490,8 @@ export default function App() {
         <Route path="/" element={<Catalogo />} />
         <Route path="/producto/:id" element={<Detalle />} />
         <Route path="/carrito" element={<Carrito />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Registro />} />
       </Routes>
     </BrowserRouter>
   );

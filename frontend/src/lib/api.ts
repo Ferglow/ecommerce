@@ -106,3 +106,62 @@ export async function registrarUsuario(datos: RegistroInput): Promise<void> {
   const data = await res.json();
   if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Error al registrarse');
 }
+
+// Vista administracion del panel en  frontend
+export interface ProductoCrearInput {
+  nombre: string;
+  precio: number;
+  categoria: string;
+  imagen: string;
+  stock: number;
+  descripcion: string;
+}
+
+export async function crearProductoAdmin(datos: ProductoCrearInput): Promise<Product> {
+  const token = localStorage.getItem('mitienda_token');
+  const res = await fetch(`${API_URL}/admin/productos`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Error al crear producto');
+  return data;
+}
+
+export async function adminListarProductos(): Promise<Product[]> {
+  const token = localStorage.getItem('mitienda_token');
+  const res = await fetch(`${API_URL}/admin/productos`, {
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error('Error al listar productos');
+  return data;
+}
+
+export async function adminActualizarProducto(id: number, datos: Partial<ProductoCrearInput>): Promise<Product> {
+  const token = localStorage.getItem('mitienda_token');
+  const res = await fetch(`${API_URL}/admin/productos/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(datos),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error('Error al actualizar producto');
+  return data;
+}
+
+export async function adminEliminarProducto(id: number): Promise<void> {
+  const token = localStorage.getItem('mitienda_token');
+  const res = await fetch(`${API_URL}/admin/productos/${id}`, {
+    method: 'DELETE',
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!res.ok) throw new Error('Error al eliminar producto');
+}

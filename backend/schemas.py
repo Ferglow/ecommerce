@@ -77,3 +77,10 @@ class ProductoCrear(BaseModel):
     stock: int = Field(ge=0, default=0)
     descripcion: str = Field(default="")
 
+class ProductoActualizar(BaseModel):
+    nombre: str | None = Field(default=None, min_length=2, max_length=100)
+    precio: float | None = Field(default=None, gt=0)
+    categoria: str | None = Field(default=None, min_length=2, max_length=50)
+    imagen: str | None = None
+    stock: int | None = Field(default=None, ge=0)
+    descripcion: str | None = None

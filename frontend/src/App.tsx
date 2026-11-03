@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import type { Product } from "./data/products";
 import {
   BrowserRouter,
   Routes,
@@ -8,10 +9,18 @@ import {
 } from "react-router-dom";
 import { useProducto, useProductos } from "./hooks/useProducts";
 import { useCart } from "./store/cartStore";
-import { crearPedido, type PedidoCreado } from "./lib/api";
 import { useAuth } from "./store/authStore";
-import { loginUsuario, registrarUsuario } from "./lib/api";
 import { useNavigate } from "react-router-dom";
+import {
+  crearPedido,
+  type PedidoCreado,
+  loginUsuario,
+  registrarUsuario,
+  crearProductoAdmin,
+  adminListarProductos,
+  adminActualizarProducto,
+  adminEliminarProducto,
+} from "./lib/api";
 
 const CATEGORIAS = ["todas", "tech", "ropa", "hogar"] as const;
 //Componentes
@@ -27,6 +36,11 @@ function Navbar() {
         <Link to="/" className="hover:text-violet-300">
           Catálogo
         </Link>
+        {usuario?.rol === "admin" && (
+          <Link to="/admin" className="hover:text-violet-300">
+            Admin
+          </Link>
+        )}
         <Link to="/carrito" className="hover:text-violet-300">
           Carrito ({count})
         </Link>
@@ -482,6 +496,158 @@ function Registro() {
   );
 }
 
+function AdminPanel() {
+  const { usuario } = useAuth();
+  const [productos, setProductos] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  
+  // Formulario creación
+  const [nombre, setNombre] = useState('');
+  const [precio, setPrecio] = useState('');
+  const [categoria, setCategoria] = useState('tech');
+  const [imagen, setImagen] = useState('📦');
+  const [stock, setStock] = useState('10');
+  const [descripcion, setDescripcion] = useState('');
+  const [mensaje, setMensaje] = useState('');
+
+  const cargarProductos = async () => {
+    try {
+      setLoading(true);
+      const data = await adminListarProductos();
+      setProductos(data);
+    } catch (err) {
+      setError('No se pudieron cargar los productos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (usuario?.rol === 'admin') {
+      cargarProductos();
+    }
+  }, [usuario]);
+
+  if (!usuario || usuario.rol !== 'admin') {
+    return <main className="p-6 text-red-600 font-bold">Acceso denegado. Se requiere cuenta de administrador.</main>;
+  }
+
+  async function handleCrear(e: FormEvent) {
+    e.preventDefault();
+    setMensaje('');
+    setError('');
+    try {
+      await crearProductoAdmin({
+        nombre,
+        precio: Number(precio),
+        categoria,
+        imagen,
+        stock: Number(stock),
+        descripcion,
+      });
+      setMensaje('¡Producto creado con éxito!');
+      setNombre('');
+      setPrecio('');
+      setDescripcion('');
+      cargarProductos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al crear');
+    }
+  }
+
+  async function handleEliminar(id: number) {
+    if (!confirm('¿Seguro que deseas eliminar este producto?')) return;
+    try {
+      await adminEliminarProducto(id);
+      cargarProductos();
+    } catch (err) {
+      alert('Error al eliminar');
+    }
+  }
+
+  async function handleCambioRapido(id: number, campo: string, valorActual: any) {
+    const nuevoValor = prompt(`Actualizar ${campo}:`, String(valorActual));
+    if (nuevoValor === null) return;
+    
+    try {
+      const payload = campo === 'precio' || campo === 'stock' ? Number(nuevoValor) : nuevoValor;
+      await adminActualizarProducto(id, { [campo]: payload });
+      cargarProductos();
+    } catch (err) {
+      alert('Error al actualizar');
+    }
+  }
+
+  return (
+    <main className="mx-auto max-w-4xl p-6">
+      <h1 className="mb-6 text-3xl font-bold">Panel de Administración</h1>
+
+      {/* Formulario de creación */}
+      <div className="mb-10 rounded-xl border bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-xl font-bold">Crear Nuevo Producto</h2>
+        <form onSubmit={handleCrear} className="grid gap-3 sm:grid-cols-2">
+          <label>Nombre <input required value={nombre} onChange={(e) => setNombre(e.target.value)} className="block w-full rounded border px-3 py-2" /></label>
+          <label>Precio <input type="number" step="0.01" required value={precio} onChange={(e) => setPrecio(e.target.value)} className="block w-full rounded border px-3 py-2" /></label>
+          <label>Categoría 
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className="block w-full rounded border px-3 py-2">
+              <option value="tech">Tech</option>
+              <option value="ropa">Ropa</option>
+              <option value="hogar">Hogar</option>
+            </select>
+          </label>
+          <label>Emoji / Imagen <input value={imagen} onChange={(e) => setImagen(e.target.value)} className="block w-full rounded border px-3 py-2" /></label>
+          <label>Stock <input type="number" required value={stock} onChange={(e) => setStock(e.target.value)} className="block w-full rounded border px-3 py-2" /></label>
+          <label>Descripción <input value={descripcion} onChange={(e) => setDescripcion(e.target.value)} className="block w-full rounded border px-3 py-2" /></label>
+
+          <div className="sm:col-span-2">
+            {mensaje && <p className="text-green-600 font-semibold">{mensaje}</p>}
+            {error && <p className="text-red-600">{error}</p>}
+            <button type="submit" className="mt-2 rounded bg-violet-600 px-4 py-2 text-white hover:bg-violet-700">Crear Producto</button>
+          </div>
+        </form>
+      </div>
+
+      {/* Listado / Tabla */}
+      <h2 className="mb-4 text-xl font-bold">Inventario de Productos</h2>
+      {loading ? <p>Cargando inventario...</p> : (
+        <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b bg-slate-50 text-slate-700 text-sm">
+                <th className="p-3">Ícono</th>
+                <th className="p-3">Nombre</th>
+                <th className="p-3">Precio</th>
+                <th className="p-3">Stock</th>
+                <th className="p-3 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productos.map((p) => (
+                <tr key={p.id} className="border-b hover:bg-slate-50 text-sm">
+                  <td className="p-3 text-2xl">{p.imagen}</td>
+                  <td className="p-3 font-semibold">{p.nombre}</td>
+                  <td className="p-3 cursor-pointer hover:text-violet-600" onClick={() => handleCambioRapido(p.id, 'precio', p.precio)}>
+                    ${p.precio} ✏️
+                  </td>
+                  <td className="p-3 cursor-pointer hover:text-violet-600" onClick={() => handleCambioRapido(p.id, 'stock', p.stock)}>
+                    {p.stock} ✏️
+                  </td>
+                  <td className="p-3 text-right">
+                    <button onClick={() => handleEliminar(p.id)} className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700 text-xs">
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </main>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -492,6 +658,7 @@ export default function App() {
         <Route path="/carrito" element={<Carrito />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
+        <Route path="/admin" element={<AdminPanel />} />
       </Routes>
     </BrowserRouter>
   );

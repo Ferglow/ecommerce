@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from db import Base, engine, get_db
-from schemas import Producto, PedidoEntrada, PedidoSalida, UsuarioRegistro, UsuarioSalida, UsuarioLogin, TokenSalida, ProductoCrear
+from schemas import Producto, PedidoEntrada, PedidoSalida, UsuarioRegistro, UsuarioSalida, UsuarioLogin, TokenSalida, ProductoCrear, ProductoCrear, ProductoActualizar
 from models import PedidoDB, PedidoItemDB, ProductoDB, UsuarioDB
 from decimal import Decimal
 from security import hash_password, verify_password, create_access_token, get_current_user, require_admin
@@ -171,3 +171,33 @@ def admin_eliminar_producto(
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     db.delete(producto)
     db.commit()
+
+
+# Edpoints actualizar
+
+@app.get("/admin/productos", response_model=list[Producto])
+def admin_listar_productos(
+    db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+):
+    return db.query(ProductoDB).all()
+
+
+@app.put("/admin/productos/{producto_id}", response_model=Producto)
+def admin_actualizar_producto(
+    producto_id: int,
+    datos: ProductoActualizar,
+    db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+):
+    producto = db.get(ProductoDB, producto_id)
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    cambios = datos.model_dump(exclude_unset=True)
+    for campo, valor in cambios.items():
+        setattr(producto, campo, valor)
+
+    db.commit()
+    db.refresh(producto)
+    return producto

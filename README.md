@@ -1,4 +1,4 @@
-# 🛒 MiTienda E-commerce — Plan Intensivo 4 semanas
+# 🛒 MiTienda E-commerce
 
 **Stack:** React + Vite + TS + Tailwind + Zustand (frontend) + FastAPI (backend)
 **Meta:** Tienda esencial empleable + deploy.

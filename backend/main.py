@@ -201,3 +201,30 @@ def admin_actualizar_producto(
     db.commit()
     db.refresh(producto)
     return producto
+
+@app.get("/admin/pedidos", response_model=list[PedidoSalida])
+def admin_listar_pedidos(
+    db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+):
+    return db.query(PedidoDB).order_by(PedidoDB.id.desc()).all()
+
+@app.patch("/admin/pedidos/{pedido_id}", response_model=PedidoSalida)
+def admin_cambiar_estado(
+    pedido_id: int,
+    estado: str,
+    db: Session = Depends(get_db),
+    admin=Depends(require_admin),
+):
+    permitidos = {"pendiente", "enviado", "entregado", "cancelado"}
+    if estado not in permitidos:
+        raise HTTPException(status_code=400, detail="Estado no válido")
+
+    pedido = db.get(PedidoDB, pedido_id)
+    if pedido is None:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+
+    pedido.estado = estado
+    db.commit()
+    db.refresh(pedido)
+    return pedido

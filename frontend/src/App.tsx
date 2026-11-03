@@ -14,13 +14,52 @@ import { useNavigate } from "react-router-dom";
 import {
   crearPedido,
   type PedidoCreado,
+  type PedidoAdmin,
   loginUsuario,
   registrarUsuario,
   crearProductoAdmin,
   adminListarProductos,
   adminActualizarProducto,
   adminEliminarProducto,
+  adminListarPedidos,
+  adminCambiarEstado,
 } from "./lib/api";
+
+interface ToastProps {
+  mensaje: string;
+  tipo?: "success" | "error";
+  onClose: () => void;
+}
+
+function Toast({ mensaje, tipo = "success", onClose }: ToastProps) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [mensaje, onClose]);
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/95 px-5 py-4 text-slate-100 shadow-2xl backdrop-blur-xl transition-all duration-300">
+      <span
+        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+          tipo === "success"
+            ? "bg-emerald-500/20 text-emerald-400"
+            : "bg-red-500/20 text-red-400"
+        }`}
+      >
+        {tipo === "success" ? "✓" : "✕"}
+      </span>
+      <span className="text-sm font-medium tracking-tight">{mensaje}</span>
+      <button
+        onClick={onClose}
+        className="ml-2 text-slate-400 hover:text-slate-200 transition-colors"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
 
 const CATEGORIAS = ["todas", "tech", "ropa", "hogar"] as const;
 //Componentes
@@ -104,6 +143,7 @@ function Catalogo() {
   const add = useCart((s) => s.add);
   const { data: products, loading, error, retry } = useProductos();
   const [busqueda, setBusqueda] = useState("");
+  const [toast, setToast] = useState("");
   const [categoria, setCategoria] =
     useState<(typeof CATEGORIAS)[number]>("todas");
 
@@ -156,26 +196,57 @@ function Catalogo() {
           ))}
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/*  Estilo de */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {filtrados.map((p) => (
-          <div key={p.id} className="rounded-xl border bg-white p-4 shadow-sm">
-            <div className="text-5xl">{p.imagen}</div>
-            <Link
-              to={`/producto/${p.id}`}
-              className="mt-2 block font-semibold hover:text-violet-600"
-            >
-              {p.nombre}
-            </Link>
-            <p className="text-sm text-slate-500">
-              {p.descripcion} · stock: {p.stock}
-            </p>
-            <p className="mt-1 text-lg font-bold">${p.precio}</p>
-            <button
-              onClick={() => add(p)}
-              className="mt-3 w-full rounded bg-violet-600 py-2 text-white hover:bg-violet-700"
-            >
-              Añadir
-            </button>
+          <div
+            key={p.id}
+            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-violet-500/30 hover:shadow-xl hover:shadow-violet-500/5"
+          >
+            <div>
+              {/* Imagen / Emoji con contenedor flotante */}
+              <div className="relative mb-4 flex h-40 w-full items-center justify-center rounded-xl bg-slate-50 text-6xl transition-transform duration-300 group-hover:scale-105">
+                <span aria-hidden>{p.imagen}</span>
+                <span className="absolute right-3 top-3 rounded-full bg-slate-900/5 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-slate-600 backdrop-blur-md">
+                  {p.categoria.toUpperCase()}
+                </span>
+              </div>
+
+              {/* Título y descripción */}
+              <Link
+                to={`/producto/${p.id}`}
+                className="block font-semibold tracking-tight text-slate-900 transition-colors hover:text-violet-600"
+              >
+                {p.nombre}
+              </Link>
+              <p className="mt-1.5 text-xs leading-relaxed text-slate-500 line-clamp-2">
+                {p.descripcion}
+              </p>
+            </div>
+
+            {/* Footer de la tarjeta: Precio y Botón */}
+            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Precio
+                </span>
+                <span className="text-lg font-bold tracking-tight text-slate-900">
+                  ${p.precio}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  add(p);
+                  setToast(`¡${p.nombre} añadido al carrito!`);
+                }}
+                className="group/btn relative inline-flex items-center gap-1.5 overflow-hidden rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-violet-600/25 transition-all duration-300 hover:bg-violet-700 hover:shadow-violet-600/40 active:scale-95"
+              >
+                <span>Añadir</span>
+                <span className="transition-transform duration-300 group-hover/btn:translate-x-0.5">
+                  →
+                </span>
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -184,6 +255,7 @@ function Catalogo() {
           Sin resultados para "{busqueda}" en {categoria}
         </p>
       )}
+      {toast && <Toast mensaje={toast} onClose={() => setToast("")} />}
     </main>
   );
 }
@@ -499,17 +571,33 @@ function Registro() {
 function AdminPanel() {
   const { usuario } = useAuth();
   const [productos, setProductos] = useState<Product[]>([]);
+  const [pedidos, setPedidos] = useState<PedidoAdmin[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+  // Diseño UX estado el modo de edicion rapida
+  const [productoEditando, setProductoEditando] = useState<Product | null>(
+    null,
+  );
+  const [nuevoPrecio, setNuevoPrecio] = useState("");
+  const [nuevoStock, setNuevoStock] = useState("");
+
   // Formulario creación
-  const [nombre, setNombre] = useState('');
-  const [precio, setPrecio] = useState('');
-  const [categoria, setCategoria] = useState('tech');
-  const [imagen, setImagen] = useState('📦');
-  const [stock, setStock] = useState('10');
-  const [descripcion, setDescripcion] = useState('');
-  const [mensaje, setMensaje] = useState('');
+  const [nombre, setNombre] = useState("");
+  const [precio, setPrecio] = useState("");
+  const [categoria, setCategoria] = useState("tech");
+  const [imagen, setImagen] = useState("📦");
+  const [stock, setStock] = useState("10");
+  const [descripcion, setDescripcion] = useState("");
+  const [mensaje, setMensaje] = useState("");
+
+  const cargarPedidos = async () => {
+    try {
+      const data = await adminListarPedidos();
+      setPedidos(data);
+    } catch (err) {
+      console.error("Error al cargar pedidos");
+    }
+  };
 
   const cargarProductos = async () => {
     try {
@@ -517,26 +605,40 @@ function AdminPanel() {
       const data = await adminListarProductos();
       setProductos(data);
     } catch (err) {
-      setError('No se pudieron cargar los productos');
+      setError("No se pudieron cargar los productos");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (usuario?.rol === 'admin') {
+    if (usuario?.rol === "admin") {
       cargarProductos();
+      cargarPedidos();
     }
   }, [usuario]);
 
-  if (!usuario || usuario.rol !== 'admin') {
-    return <main className="p-6 text-red-600 font-bold">Acceso denegado. Se requiere cuenta de administrador.</main>;
+  if (!usuario || usuario.rol !== "admin") {
+    return (
+      <main className="p-6 text-red-600 font-bold">
+        Acceso denegado. Se requiere cuenta de administrador.
+      </main>
+    );
+  }
+
+  async function handleCambioEstado(id: number, nuevoEstado: string) {
+    try {
+      await adminCambiarEstado(id, nuevoEstado);
+      cargarPedidos();
+    } catch (err) {
+      alert("Error al actualizar el estado");
+    }
   }
 
   async function handleCrear(e: FormEvent) {
     e.preventDefault();
-    setMensaje('');
-    setError('');
+    setMensaje("");
+    setError("");
     try {
       await crearProductoAdmin({
         nombre,
@@ -546,36 +648,45 @@ function AdminPanel() {
         stock: Number(stock),
         descripcion,
       });
-      setMensaje('¡Producto creado con éxito!');
-      setNombre('');
-      setPrecio('');
-      setDescripcion('');
+      setMensaje("¡Producto creado con éxito!");
+      setNombre("");
+      setPrecio("");
+      setDescripcion("");
       cargarProductos();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear');
+      setError(err instanceof Error ? err.message : "Error al crear");
     }
   }
 
   async function handleEliminar(id: number) {
-    if (!confirm('¿Seguro que deseas eliminar este producto?')) return;
+    if (!confirm("¿Seguro que deseas eliminar este producto?")) return;
     try {
       await adminEliminarProducto(id);
       cargarProductos();
     } catch (err) {
-      alert('Error al eliminar');
+      alert("Error al eliminar");
     }
   }
 
-  async function handleCambioRapido(id: number, campo: string, valorActual: any) {
-    const nuevoValor = prompt(`Actualizar ${campo}:`, String(valorActual));
-    if (nuevoValor === null) return;
-    
+  function abrirModalEdicion(p: Product) {
+    setProductoEditando(p);
+    setNuevoPrecio(String(p.precio));
+    setNuevoStock(String(p.stock));
+  }
+
+  async function guardarEdicion(e: FormEvent) {
+    e.preventDefault();
+    if (!productoEditando) return;
+
     try {
-      const payload = campo === 'precio' || campo === 'stock' ? Number(nuevoValor) : nuevoValor;
-      await adminActualizarProducto(id, { [campo]: payload });
+      await adminActualizarProducto(productoEditando.id, {
+        precio: Number(nuevoPrecio),
+        stock: Number(nuevoStock),
+      });
+      setProductoEditando(null);
       cargarProductos();
     } catch (err) {
-      alert('Error al actualizar');
+      alert("Error al actualizar el producto");
     }
   }
 
@@ -587,30 +698,141 @@ function AdminPanel() {
       <div className="mb-10 rounded-xl border bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-bold">Crear Nuevo Producto</h2>
         <form onSubmit={handleCrear} className="grid gap-3 sm:grid-cols-2">
-          <label>Nombre <input required value={nombre} onChange={(e) => setNombre(e.target.value)} className="block w-full rounded border px-3 py-2" /></label>
-          <label>Precio <input type="number" step="0.01" required value={precio} onChange={(e) => setPrecio(e.target.value)} className="block w-full rounded border px-3 py-2" /></label>
-          <label>Categoría 
-            <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className="block w-full rounded border px-3 py-2">
+          <label>
+            Nombre{" "}
+            <input
+              required
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className="block w-full rounded border px-3 py-2"
+            />
+          </label>
+          <label>
+            Precio{" "}
+            <input
+              type="number"
+              step="0.01"
+              required
+              value={precio}
+              onChange={(e) => setPrecio(e.target.value)}
+              className="block w-full rounded border px-3 py-2"
+            />
+          </label>
+          <label>
+            Categoría
+            <select
+              value={categoria}
+              onChange={(e) => setCategoria(e.target.value)}
+              className="block w-full rounded border px-3 py-2"
+            >
               <option value="tech">Tech</option>
               <option value="ropa">Ropa</option>
               <option value="hogar">Hogar</option>
             </select>
           </label>
-          <label>Emoji / Imagen <input value={imagen} onChange={(e) => setImagen(e.target.value)} className="block w-full rounded border px-3 py-2" /></label>
-          <label>Stock <input type="number" required value={stock} onChange={(e) => setStock(e.target.value)} className="block w-full rounded border px-3 py-2" /></label>
-          <label>Descripción <input value={descripcion} onChange={(e) => setDescripcion(e.target.value)} className="block w-full rounded border px-3 py-2" /></label>
+          <label>
+            Emoji / Imagen{" "}
+            <input
+              value={imagen}
+              onChange={(e) => setImagen(e.target.value)}
+              className="block w-full rounded border px-3 py-2"
+            />
+          </label>
+          <label>
+            Stock{" "}
+            <input
+              type="number"
+              required
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              className="block w-full rounded border px-3 py-2"
+            />
+          </label>
+          <label>
+            Descripción{" "}
+            <input
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              className="block w-full rounded border px-3 py-2"
+            />
+          </label>
 
           <div className="sm:col-span-2">
-            {mensaje && <p className="text-green-600 font-semibold">{mensaje}</p>}
+            {mensaje && (
+              <p className="text-green-600 font-semibold">{mensaje}</p>
+            )}
             {error && <p className="text-red-600">{error}</p>}
-            <button type="submit" className="mt-2 rounded bg-violet-600 px-4 py-2 text-white hover:bg-violet-700">Crear Producto</button>
+            <button
+              type="submit"
+              className="mt-2 rounded bg-violet-600 px-4 py-2 text-white hover:bg-violet-700"
+            >
+              Crear Producto
+            </button>
           </div>
         </form>
       </div>
 
+      {/* Listado de Pedidos */}
+      <h2 className="mb-4 mt-10 text-xl font-bold">Gestión de Pedidos</h2>
+      <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b bg-slate-50 text-slate-700 text-sm">
+              <th className="p-3">ID</th>
+              <th className="p-3">Cliente</th>
+              <th className="p-3">Total</th>
+              <th className="p-3">Estado</th>
+              <th className="p-3">Ítems</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pedidos.map((ped) => (
+              <tr key={ped.id} className="border-b hover:bg-slate-50 text-sm">
+                <td className="p-3 font-semibold">#{ped.id}</td>
+                <td className="p-3">
+                  <div>{ped.nombre_cliente}</div>
+                  <div className="text-xs text-slate-500">
+                    {ped.email_cliente}
+                  </div>
+                </td>
+                <td className="p-3 font-bold">${ped.total}</td>
+                <td className="p-3">
+                  <select
+                    value={ped.estado}
+                    onChange={(e) => handleCambioEstado(ped.id, e.target.value)}
+                    className="rounded border px-2 py-1 bg-white text-xs font-semibold"
+                  >
+                    <option value="pendiente">Pendiente</option>
+                    <option value="enviado">Enviado</option>
+                    <option value="entregado">Entregado</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                </td>
+                <td className="p-3 text-xs text-slate-600">
+                  {ped.items.map((i, idx) => (
+                    <div key={idx}>
+                      • {i.nombre_producto} (x{i.cantidad})
+                    </div>
+                  ))}
+                </td>
+              </tr>
+            ))}
+            {pedidos.length === 0 && (
+              <tr>
+                <td colSpan={5} className="p-4 text-center text-slate-500">
+                  No hay pedidos registrados todavía.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
       {/* Listado / Tabla */}
       <h2 className="mb-4 text-xl font-bold">Inventario de Productos</h2>
-      {loading ? <p>Cargando inventario...</p> : (
+      {loading ? (
+        <p>Cargando inventario...</p>
+      ) : (
         <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -627,14 +849,23 @@ function AdminPanel() {
                 <tr key={p.id} className="border-b hover:bg-slate-50 text-sm">
                   <td className="p-3 text-2xl">{p.imagen}</td>
                   <td className="p-3 font-semibold">{p.nombre}</td>
-                  <td className="p-3 cursor-pointer hover:text-violet-600" onClick={() => handleCambioRapido(p.id, 'precio', p.precio)}>
+                  <td
+                    className="p-3 cursor-pointer hover:text-violet-600 font-medium"
+                    onClick={() => abrirModalEdicion(p)}
+                  >
                     ${p.precio} ✏️
                   </td>
-                  <td className="p-3 cursor-pointer hover:text-violet-600" onClick={() => handleCambioRapido(p.id, 'stock', p.stock)}>
+                  <td
+                    className="p-3 cursor-pointer hover:text-violet-600 font-medium"
+                    onClick={() => abrirModalEdicion(p)}
+                  >
                     {p.stock} ✏️
                   </td>
                   <td className="p-3 text-right">
-                    <button onClick={() => handleEliminar(p.id)} className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700 text-xs">
+                    <button
+                      onClick={() => handleEliminar(p.id)}
+                      className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700 text-xs"
+                    >
                       Eliminar
                     </button>
                   </td>
@@ -642,6 +873,56 @@ function AdminPanel() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Modal de Edición */}
+      {productoEditando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="mb-4 text-xl font-bold">
+              Editar: {productoEditando.nombre}
+            </h2>
+            <form onSubmit={guardarEdicion} className="grid gap-3">
+              <label>
+                Precio ($)
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={nuevoPrecio}
+                  onChange={(e) => setNuevoPrecio(e.target.value)}
+                  className="block w-full rounded border px-3 py-2 mt-1"
+                />
+              </label>
+              <label>
+                Stock
+                <input
+                  type="number"
+                  required
+                  value={nuevoStock}
+                  onChange={(e) => setNuevoStock(e.target.value)}
+                  className="block w-full rounded border px-3 py-2 mt-1"
+                />
+              </label>
+
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setProductoEditando(null)}
+                  className="rounded border px-4 py-2 text-slate-600 hover:bg-slate-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="rounded bg-violet-600 px-4 py-2 text-white hover:bg-violet-700"
+                >
+                  Guardar Cambios
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </main>

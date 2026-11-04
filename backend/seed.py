@@ -2,27 +2,29 @@ from db import Base, SessionLocal, engine
 from models import ProductoDB
 
 PRODUCTOS = [
-    {"id": 1, "nombre": 'Laptop Dev Pro 14"', "precio": 1299, "categoria": "tech", "imagen": "💻", "stock": 10, "descripcion": "Ideal para programar Fullstack"},
-    {"id": 2, "nombre": "Auriculares Noise-Cancel", "precio": 199, "categoria": "tech", "imagen": "🎧", "stock": 25, "descripcion": "Para concentrarte 6h al día"},
-    {"id": 3, "nombre": "Teclado Mecánico RGB", "precio": 89, "categoria": "tech", "imagen": "⌨️", "stock": 30, "descripcion": "Táctil y rápido"},
-    {"id": 4, "nombre": "Mouse Ergonómico", "precio": 49, "categoria": "tech", "imagen": "🖱️", "stock": 40, "descripcion": "Sin dolor de muñeca"},
-    {"id": 5, "nombre": "Camiseta DevOS", "precio": 25, "categoria": "ropa", "imagen": "👕", "stock": 100, "descripcion": "Algodón premium"},
-    {"id": 6, "nombre": "Mochila Viajera 25L", "precio": 79, "categoria": "ropa", "imagen": "🎒", "stock": 15, "descripcion": "Lleva tu laptop segura"},
-    {"id": 7, "nombre": "Café Grano 1kg", "precio": 18, "categoria": "hogar", "imagen": "☕", "stock": 60, "descripcion": "Combustible de programador"},
-    {"id": 8, "nombre": "Lámpara LED Escritorio", "precio": 35, "categoria": "hogar", "imagen": "💡", "stock": 20, "descripcion": "Cuida tu vista"},
-    {"id": 9, "nombre": "Celular Iphone 15ProMax", "precio": 25, "categoria": "tech", "imagen": "📱", "stock": 10, "descripcion": "Estetica de 9.5"},
+    # Abarrotes y piezas con código de barras
+    {"id": 1, "nombre": "Coca Cola 600ml", "precio": 18.0, "categoria": "bebidas", "imagen": "🥤", "stock": 50.0, "unidad_medida": "pza", "codigo_barras": "7501055300075", "descripcion": "Refresco botella"},
+    {"id": 2, "nombre": "Papas Fritas 170g", "precio": 45.0, "categoria": "snacks", "imagen": "🥔", "stock": 30.0, "unidad_medida": "pza", "codigo_barras": "7501011123456", "descripcion": "Botana salada"},
+    {"id": 3, "nombre": "Leche Entera 1L", "precio": 26.5, "categoria": "lacteos", "imagen": "🥛", "stock": 20.0, "unidad_medida": "pza", "codigo_barras": "7501020304050", "descripcion": "Leche pasteurizada"},
+
+    # Frutas y Legumbres a Granel (Por Kilo)
+    {"id": 4, "nombre": "Jitomate Saladet", "precio": 32.0, "categoria": "frutas_verduras", "imagen": "🍅", "stock": 45.5, "unidad_medida": "kg", "codigo_barras": None, "descripcion": "Precio por kilogramo"},
+    {"id": 5, "nombre": "Plátano Tabasco", "precio": 24.0, "categoria": "frutas_verduras", "imagen": "🍌", "stock": 30.0, "unidad_medida": "kg", "codigo_barras": None, "descripcion": "Precio por kilogramo"},
+    {"id": 6, "nombre": "Aguacate Hass", "precio": 75.0, "categoria": "frutas_verduras", "imagen": "🥑", "stock": 25.0, "unidad_medida": "kg", "codigo_barras": None, "descripcion": "Precio por kilogramo"},
+    {"id": 7, "nombre": "Manzana Golden", "precio": 48.0, "categoria": "frutas_verduras", "imagen": "🍎", "stock": 20.0, "unidad_medida": "kg", "codigo_barras": None, "descripcion": "Precio por kilogramo"},
+    {"id": 8, "nombre": "Cebolla Blanca", "precio": 28.0, "categoria": "frutas_verduras", "imagen": "🧅", "stock": 35.0, "unidad_medida": "kg", "codigo_barras": None, "descripcion": "Precio por kilogramo"},
+    {"id": 9, "nombre": "Limón con Semilla", "precio": 38.0, "categoria": "frutas_verduras", "imagen": "🍋", "stock": 40.0, "unidad_medida": "kg", "codigo_barras": None, "descripcion": "Precio por kilogramo"},
 ]
 
 def seed():
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         if db.query(ProductoDB).count() > 0:
-            print("Ya hay productos; no se insert nada.")
+            print("Ya hay productos; no se inserta nada.")
             return
         db.add_all([ProductoDB(**p) for p in PRODUCTOS])
         db.commit()
-    print(f"Insertados {len (PRODUCTOS)} productos.")
-
+    print(f"Insertados {len(PRODUCTOS)} productos con unidades y códigos de barras.")
 
 if __name__ == "__main__":
-    seed()    
+    seed()

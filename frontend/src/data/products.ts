@@ -1,3 +1,5 @@
+export type UnidadMedida = "pza" | "kg";
+
 export interface Product {
   id: number;
   nombre: string;
@@ -6,6 +8,8 @@ export interface Product {
   imagen: string;
   stock: number;
   descripcion: string;
+  unidad_medida?: UnidadMedida;
+  codigo_barras?: string | null;
 }
 
 // Datos de ejemplo. La app ya consume la API real (ver src/lib/api.ts).

@@ -1,15 +1,10 @@
-
-from sqlalchemy import Float, Integer, String, Boolean, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
-from db import Base
-# Se requiere guardar pedido (datos del cliente, estado, total y fecha)
-# Tambien se requiere guardar items del pedido (producto, cantidad y precio al momento de comprar)
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import  DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from db import Base
 
 class ProductoDB(Base):
     __tablename__ = "productos"
@@ -19,7 +14,9 @@ class ProductoDB(Base):
     precio: Mapped[float] = mapped_column(Float, nullable=False)
     categoria: Mapped[str] = mapped_column(String, nullable=False)
     imagen: Mapped[str] = mapped_column(String, nullable=False)
-    stock: Mapped[int] = mapped_column(Integer, default=0)
+    stock: Mapped[float] = mapped_column(Float, default=0.0)  # Soporta decimales (kg)
+    unidad_medida: Mapped[str] = mapped_column(String(10), default="pza", nullable=False)  # 'pza' o 'kg'
+    codigo_barras: Mapped[str | None] = mapped_column(String(50), unique=True, index=True, nullable=True)
     descripcion: Mapped[str] = mapped_column(String, default="")
 
 class PedidoDB(Base):
@@ -39,17 +36,18 @@ class PedidoDB(Base):
         back_populates="pedido",
         cascade="all, delete-orphan",
     )
-    
-class PedidoItemDB(Base):
-     __tablename__ = "pedido_items"
 
-     id: Mapped[int] = mapped_column(primary_key=True)
-     pedido_id: Mapped[int] = mapped_column(ForeignKey("pedidos.id"), nullable=False)
-     producto_id: Mapped[int] = mapped_column(ForeignKey("productos.id"), nullable=False)
-     nombre_producto: Mapped[str] = mapped_column(String, nullable=False)
-     precio_unitario: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
-     cantidad: Mapped[int] = mapped_column(Integer, nullable=False)
-     pedido: Mapped["PedidoDB"] = relationship(back_populates="items")
+class PedidoItemDB(Base):
+    __tablename__ = "pedido_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pedido_id: Mapped[int] = mapped_column(ForeignKey("pedidos.id"), nullable=False)
+    producto_id: Mapped[int] = mapped_column(ForeignKey("productos.id"), nullable=False)
+    nombre_producto: Mapped[str] = mapped_column(String, nullable=False)
+    precio_unitario: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    cantidad: Mapped[float] = mapped_column(Float, nullable=False)  # Permite peso decimal
+    unidad_medida: Mapped[str] = mapped_column(String(10), default="pza", nullable=False)
+    pedido: Mapped["PedidoDB"] = relationship(back_populates="items")
 
 class UsuarioDB(Base):
     __tablename__ = "usuarios"
@@ -60,5 +58,8 @@ class UsuarioDB(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     rol: Mapped[str] = mapped_column(String(20), default="cliente", nullable=False)
     activo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    creado_en:Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now()),
-    nullable=False
+    creado_en: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )

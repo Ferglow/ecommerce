@@ -1,7 +1,6 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from datetime import datetime
 from decimal import Decimal
-
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 class Producto(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -11,14 +10,14 @@ class Producto(BaseModel):
     precio: float
     categoria: str
     imagen: str
-    stock: int
+    stock: float
+    unidad_medida: str = "pza"
+    codigo_barras: str | None = None
     descripcion: str
 
-# Seguimos con el checkout del backend. Agregamos esquemas para validar la solicitud, despues POST / pedidos construira porductos, validará stock, calculará el total y guardará el pedido. El navegador solo enviara IDs y cantidades: no se confiara en sus precios finales
-
 class ItemPedidoEntrada(BaseModel):
-    producto_id: int  = Field(gt = 0)
-    cantidad: int = Field(gt=0, le=99)
+    producto_id: int = Field(gt=0)
+    cantidad: float = Field(gt=0)  # Soporta cantidades decimales (ej. 1.250 kg)
 
 class PedidoEntrada(BaseModel):
     nombre_cliente: str = Field(min_length=2, max_length=100)
@@ -31,7 +30,8 @@ class PedidoItemSalida(BaseModel):
     producto_id: int
     nombre_producto: str
     precio_unitario: Decimal
-    cantidad: int
+    cantidad: float
+    unidad_medida: str = "pza"
 
 class PedidoSalida(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -67,14 +67,14 @@ class TokenSalida(BaseModel):
     token_type: str = "bearer"
     usuario: UsuarioSalida
 
-# Panel de administracion
-
 class ProductoCrear(BaseModel):
     nombre: str = Field(min_length=2, max_length=100)
     precio: float = Field(gt=0)
     categoria: str = Field(min_length=2, max_length=50)
     imagen: str = Field(default="📦")
-    stock: int = Field(ge=0, default=0)
+    stock: float = Field(ge=0, default=0.0)
+    unidad_medida: str = Field(default="pza")  # 'pza' o 'kg'
+    codigo_barras: str | None = None
     descripcion: str = Field(default="")
 
 class ProductoActualizar(BaseModel):
@@ -82,5 +82,7 @@ class ProductoActualizar(BaseModel):
     precio: float | None = Field(default=None, gt=0)
     categoria: str | None = Field(default=None, min_length=2, max_length=50)
     imagen: str | None = None
-    stock: int | None = Field(default=None, ge=0)
+    stock: float | None = Field(default=None, ge=0)
+    unidad_medida: str | None = None
+    codigo_barras: str | None = None
     descripcion: str | None = None

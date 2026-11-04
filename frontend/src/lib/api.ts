@@ -28,6 +28,11 @@ export const getProductos = (signal?: AbortSignal) =>
 export const getProducto = (id: number, signal?: AbortSignal) =>
   request<Product>(`/productos/${id}`, signal);
 
+export const buscarPorCodigoBarras = (
+  codigo: string,
+  signal?: AbortSignal,
+) => request<Product>(`/productos/barcode/${encodeURIComponent(codigo)}`, signal);
+
 export interface PedidoCreado {
   id: number;
   total: number | string;
@@ -121,6 +126,8 @@ export interface ProductoCrearInput {
   imagen: string;
   stock: number;
   descripcion: string;
+  unidad_medida?: "pza" | "kg";
+  codigo_barras?: string | null;
 }
 
 export async function crearProductoAdmin(
@@ -192,6 +199,7 @@ export interface PedidoAdmin {
     nombre_producto: string;
     precio_unitario: number | string;
     cantidad: number;
+    unidad_medida: "pza" | "kg";
   }[];
 }
 

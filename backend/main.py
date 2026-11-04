@@ -43,6 +43,13 @@ def obtener_producto(producto_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     return producto
 
+@app.get("/productos/barcode/{codigo}", response_model=Producto)
+def obtener_producto_por_codigo(codigo: str, db: Session = Depends(get_db)):
+    producto = db.query(ProductoDB).filter(ProductoDB.codigo_barras == codigo).first()
+    if producto is None:
+        raise HTTPException(status_code=404, detail="Producto no encontrado con ese código de barras")
+    return producto
+
 @app.post("/pedidos", response_model=PedidoSalida, status_code=status.HTTP_201_CREATED)
 def crear_pedido(datos: PedidoEntrada, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
     cantidades = {}
@@ -71,13 +78,15 @@ def crear_pedido(datos: PedidoEntrada, db: Session = Depends(get_db), usuario=De
 
     for producto, cantidad in productos.values():
         precio = Decimal(str(producto.precio))
-        total += precio * cantidad
+        cantidad_decimal = Decimal(str(cantidad))
+        total += precio * cantidad_decimal
         lineas.append(
             PedidoItemDB(
                 producto_id=producto.id,
                 nombre_producto=producto.nombre,
                 precio_unitario=precio,
                 cantidad=cantidad,
+                unidad_medida=producto.unidad_medida,
             )
         )
 

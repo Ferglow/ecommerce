@@ -5,22 +5,32 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+/* Modo Oscuro (Por defecto) */
 body {
   font-family: var(--font-sans);
-  background-color: #030712; /* Un tono negro/azul pizarra muy profundo (slate-950) */
+  background-color: #030712;
   color: #f8fafc;
   margin: 0;
   padding: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Efecto cristal sutil para scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
+/* Modo Claro */
+html.light body {
+  background-color: #f8fafc;
+  color: #0f172a;
 }
-::-webkit-scrollbar-track {
-  background: #030712;
+
+/* Estilos de tarjetas y contenedores según el modo */
+html.light .card-glass {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05) !important;
+  color: #0f172a !important;
 }
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 3px;
+
+html.light input, html.light select {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
 }

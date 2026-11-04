@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { Product } from "./data/products";
+import { useTheme } from "./store/themeStore";
 import {
   BrowserRouter,
   Routes,
@@ -73,70 +74,52 @@ const CATEGORIAS = ["todas", "tech", "ropa", "hogar"] as const;
 function Navbar() {
   const count = useCart((s) => s.count());
   const { usuario, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   return (
     <nav className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-slate-950/80 px-6 py-4 text-slate-100 backdrop-blur-xl">
-      <Link
-        to="/"
-        className="text-xl font-bold tracking-tight text-white flex items-center gap-2"
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30">
-          🛒
-        </span>
+      <Link to="/" className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30">🛒</span>
         MiTienda
       </Link>
-      <div className="flex items-center gap-5 text-sm font-medium text-slate-300">
-        <Link to="/" className="transition-colors hover:text-white">
-          Catálogo
-        </Link>
+      
+      <div className="flex items-center gap-4">
+        {/* BOTÓN TOGGLE TEMA (Aquí es donde se usa toggleTheme y theme) */}
+        <button
+          onClick={toggleTheme}
+          aria-label="Cambiar tema"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all"
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+
+        <Link to="/" className="transition-colors hover:text-white">Catálogo</Link>
         {usuario?.rol === "admin" && (
-          <Link
-            to="/admin"
-            className="transition-colors hover:text-violet-400 font-semibold"
-          >
+          <Link to="/admin" className="transition-colors hover:text-violet-400 font-semibold">
             Admin
           </Link>
         )}
-        <Link
-          to="/carrito"
-          className="transition-colors hover:text-white flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full"
-        >
+        <Link to="/carrito" className="transition-colors hover:text-white flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
           <span>🛒 Carrito</span>
-          <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs text-white">
-            {count}
-          </span>
+          <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs text-white">{count}</span>
         </Link>
         {usuario ? (
           <div className="flex items-center gap-3 pl-2 border-l border-white/10">
-            <span className="text-xs text-slate-400">
-              Hola, <strong className="text-slate-200">{usuario.nombre}</strong>
-            </span>
-            <button
-              onClick={logout}
-              className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition-colors"
-            >
+            <span className="text-xs text-slate-400">Hola, <strong className="text-slate-200">{usuario.nombre}</strong></span>
+            <button onClick={logout} className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition-colors">
               Salir
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Link
-              to="/login"
-              className="px-3 py-1.5 text-slate-300 hover:text-white transition-colors"
-            >
-              Entrar
-            </Link>
-            <Link
-              to="/registro"
-              className="rounded-xl bg-violet-600 px-4 py-1.5 text-white shadow-lg shadow-violet-600/20 hover:bg-violet-500 transition-all"
-            >
-              Registro
-            </Link>
+            <Link to="/login" className="px-3 py-1.5 text-slate-300 hover:text-white transition-colors">Entrar</Link>
+            <Link to="/registro" className="rounded-xl bg-violet-600 px-4 py-1.5 text-white shadow-lg shadow-violet-600/20 hover:bg-violet-500 transition-all">Registro</Link>
           </div>
         )}
       </div>
     </nav>
   );
 }
+
 function Cargando({ mensaje }: { mensaje: string }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border bg-white p-6 text-slate-500">
@@ -575,21 +558,21 @@ function Login() {
 }
 
 function Registro() {
-  const [nombre, setNombre] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   async function handleRegistro(e: FormEvent) {
     e.preventDefault();
-    setError('');
+    setError("");
     try {
       await registrarUsuario({ nombre, email, password });
-      alert('¡Registro exitoso! Inicia sesión.');
-      navigate('/login');
+      alert("¡Registro exitoso! Inicia sesión.");
+      navigate("/login");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error en el registro');
+      setError(err instanceof Error ? err.message : "Error en el registro");
     }
   }
 
@@ -597,54 +580,63 @@ function Registro() {
     <div className="relative flex min-h-[85vh] items-center justify-center px-4">
       {/* Destello de luz decorativo de fondo */}
       <div className="pointer-events-none absolute -top-20 h-72 w-72 rounded-full bg-violet-600/15 blur-[120px]" />
-      
+
       {/* Tarjeta 3D Flotante */}
       <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60 p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] backdrop-blur-2xl transition-all duration-500 hover:border-violet-500/30">
-        
         {/* Encabezado */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600/10 border border-violet-500/20 text-2xl shadow-inner">
             ✨
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Crea tu cuenta</h1>
-          <p className="mt-1 text-sm text-slate-400">Únete y comienza a comprar</p>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Crea tu cuenta
+          </h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Únete y comienza a comprar
+          </p>
         </div>
 
         {/* Formulario */}
         <form onSubmit={handleRegistro} className="grid gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Nombre completo</label>
-            <input 
-              required 
-              value={nombre} 
-              onChange={(e) => setNombre(e.target.value)} 
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Nombre completo
+            </label>
+            <input
+              required
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
               placeholder="Tu nombre"
-              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20" 
+              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Correo electrónico</label>
-            <input 
-              type="email" 
-              required 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Correo electrónico
+            </label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@correo.com"
-              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20" 
+              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Contraseña</label>
-            <input 
-              type="password" 
-              required 
-              minLength={8} 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Contraseña
+            </label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Mínimo 8 caracteres"
-              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20" 
+              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20"
             />
           </div>
 
@@ -654,8 +646,8 @@ function Registro() {
             </div>
           )}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="mt-2 w-full rounded-xl bg-violet-600 py-3.5 text-sm font-semibold text-white shadow-xl shadow-violet-600/25 transition-all duration-300 hover:bg-violet-500 hover:shadow-violet-600/40 active:scale-[0.98]"
           >
             Registrarse
@@ -664,8 +656,11 @@ function Registro() {
 
         {/* Pie de tarjeta */}
         <p className="mt-6 text-center text-xs text-slate-500">
-          ¿Ya tienes una cuenta?{' '}
-          <Link to="/login" className="font-semibold text-violet-400 hover:text-violet-300 transition-colors">
+          ¿Ya tienes una cuenta?{" "}
+          <Link
+            to="/login"
+            className="font-semibold text-violet-400 hover:text-violet-300 transition-colors"
+          >
             Inicia sesión aquí
           </Link>
         </p>

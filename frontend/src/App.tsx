@@ -10,7 +10,7 @@ import {
 import { useProducto, useProductos } from "./hooks/useProducts";
 import { useCart } from "./store/cartStore";
 import { useAuth } from "./store/authStore";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import {
   crearPedido,
   type PedidoCreado,
@@ -25,6 +25,13 @@ import {
   adminCambiarEstado,
 } from "./lib/api";
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const token = useAuth((s) => s.token);
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
 interface ToastProps {
   mensaje: string;
   tipo?: "success" | "error";
@@ -67,49 +74,69 @@ function Navbar() {
   const count = useCart((s) => s.count());
   const { usuario, logout } = useAuth();
   return (
-    <nav className="flex items-center justify-between bg-slate-900 px-6 py-4 text-white">
-      <Link to="/" className="text-xl font-bold">
-        🛒 MiTienda
+    <nav className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-slate-950/80 px-6 py-4 text-slate-100 backdrop-blur-xl">
+      <Link
+        to="/"
+        className="text-xl font-bold tracking-tight text-white flex items-center gap-2"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30">
+          🛒
+        </span>
+        MiTienda
       </Link>
-      <div className="flex items-center gap-4">
-        <Link to="/" className="hover:text-violet-300">
+      <div className="flex items-center gap-5 text-sm font-medium text-slate-300">
+        <Link to="/" className="transition-colors hover:text-white">
           Catálogo
         </Link>
         {usuario?.rol === "admin" && (
-          <Link to="/admin" className="hover:text-violet-300">
+          <Link
+            to="/admin"
+            className="transition-colors hover:text-violet-400 font-semibold"
+          >
             Admin
           </Link>
         )}
-        <Link to="/carrito" className="hover:text-violet-300">
-          Carrito ({count})
+        <Link
+          to="/carrito"
+          className="transition-colors hover:text-white flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full"
+        >
+          <span>🛒 Carrito</span>
+          <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs text-white">
+            {count}
+          </span>
         </Link>
         {usuario ? (
-          <>
-            <span className="text-sm text-violet-300">
-              Hola, {usuario.nombre}
+          <div className="flex items-center gap-3 pl-2 border-l border-white/10">
+            <span className="text-xs text-slate-400">
+              Hola, <strong className="text-slate-200">{usuario.nombre}</strong>
             </span>
             <button
               onClick={logout}
-              className="rounded bg-red-600 px-3 py-1 text-xs"
+              className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition-colors"
             >
               Salir
             </button>
-          </>
+          </div>
         ) : (
-          <>
-            <Link to="/login" className="hover:text-violet-300">
+          <div className="flex items-center gap-2">
+            <Link
+              to="/login"
+              className="px-3 py-1.5 text-slate-300 hover:text-white transition-colors"
+            >
               Entrar
             </Link>
-            <Link to="/registro" className="hover:text-violet-300">
+            <Link
+              to="/registro"
+              className="rounded-xl bg-violet-600 px-4 py-1.5 text-white shadow-lg shadow-violet-600/20 hover:bg-violet-500 transition-all"
+            >
               Registro
             </Link>
-          </>
+          </div>
         )}
       </div>
     </nav>
   );
 }
-
 function Cargando({ mensaje }: { mensaje: string }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border bg-white p-6 text-slate-500">
@@ -201,13 +228,13 @@ function Catalogo() {
         {filtrados.map((p) => (
           <div
             key={p.id}
-            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-violet-500/30 hover:shadow-xl hover:shadow-violet-500/5"
+            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 p-5 shadow-2xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-violet-500/40 hover:bg-slate-900/80 hover:shadow-violet-500/10"
           >
             <div>
-              {/* Imagen / Emoji con contenedor flotante */}
-              <div className="relative mb-4 flex h-40 w-full items-center justify-center rounded-xl bg-slate-50 text-6xl transition-transform duration-300 group-hover:scale-105">
+              {/* Imagen / Emoji */}
+              <div className="relative mb-4 flex h-40 w-full items-center justify-center rounded-xl bg-slate-950/50 text-6xl border border-white/5 transition-transform duration-300 group-hover:scale-105">
                 <span aria-hidden>{p.imagen}</span>
-                <span className="absolute right-3 top-3 rounded-full bg-slate-900/5 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-slate-600 backdrop-blur-md">
+                <span className="absolute right-3 top-3 rounded-full bg-white/5 border border-white/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-slate-400 backdrop-blur-md">
                   {p.categoria.toUpperCase()}
                 </span>
               </div>
@@ -215,22 +242,22 @@ function Catalogo() {
               {/* Título y descripción */}
               <Link
                 to={`/producto/${p.id}`}
-                className="block font-semibold tracking-tight text-slate-900 transition-colors hover:text-violet-600"
+                className="block font-semibold tracking-tight text-slate-100 transition-colors hover:text-violet-400"
               >
                 {p.nombre}
               </Link>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500 line-clamp-2">
+              <p className="mt-1.5 text-xs leading-relaxed text-slate-400 line-clamp-2">
                 {p.descripcion}
               </p>
             </div>
 
-            {/* Footer de la tarjeta: Precio y Botón */}
-            <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+            {/* Footer de la tarjeta */}
+            <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
                   Precio
                 </span>
-                <span className="text-lg font-bold tracking-tight text-slate-900">
+                <span className="text-lg font-bold tracking-tight text-white">
                   ${p.precio}
                 </span>
               </div>
@@ -239,7 +266,7 @@ function Catalogo() {
                   add(p);
                   setToast(`¡${p.nombre} añadido al carrito!`);
                 }}
-                className="group/btn relative inline-flex items-center gap-1.5 overflow-hidden rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-violet-600/25 transition-all duration-300 hover:bg-violet-700 hover:shadow-violet-600/40 active:scale-95"
+                className="group/btn relative inline-flex items-center gap-1.5 overflow-hidden rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-violet-600/25 transition-all duration-300 hover:bg-violet-500 hover:shadow-violet-600/40 active:scale-95"
               >
                 <span>Añadir</span>
                 <span className="transition-transform duration-300 group-hover/btn:translate-x-0.5">
@@ -448,6 +475,7 @@ function Carrito() {
   );
 }
 
+// Funcion de Login tarjeta 3d
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -468,103 +496,181 @@ function Login() {
   }
 
   return (
-    <main className="mx-auto max-w-md p-6">
-      <h1 className="mb-4 text-2xl font-bold">Iniciar Sesión</h1>
-      <form onSubmit={handleLogin} className="grid gap-3">
-        <label>
-          Email{" "}
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="block w-full rounded border px-3 py-2"
-          />
-        </label>
-        <label>
-          Contraseña{" "}
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="block w-full rounded border px-3 py-2"
-          />
-        </label>
-        {error && <p className="text-red-600">{error}</p>}
-        <button
-          type="submit"
-          className="rounded bg-violet-600 px-4 py-2 text-white"
-        >
-          Entrar
-        </button>
-      </form>
-    </main>
+    <div className="relative flex min-h-[85vh] items-center justify-center px-4">
+      {/* Destello de luz decorativo de fondo */}
+      <div className="pointer-events-none absolute -top-20 h-72 w-72 rounded-full bg-violet-600/15 blur-[120px]" />
+
+      {/* Tarjeta 3D Flotante */}
+      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60 p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] backdrop-blur-2xl transition-all duration-500 hover:border-violet-500/30">
+        {/* Encabezado */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600/10 border border-violet-500/20 text-2xl shadow-inner">
+            🛒
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Bienvenido de nuevo
+          </h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Ingresa a tu cuenta para continuar
+          </p>
+        </div>
+
+        {/* Formulario */}
+        <form onSubmit={handleLogin} className="grid gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Correo electrónico
+            </label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@correo.com"
+              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Contraseña
+            </label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20"
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-center text-xs text-red-400">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="mt-2 w-full rounded-xl bg-violet-600 py-3.5 text-sm font-semibold text-white shadow-xl shadow-violet-600/25 transition-all duration-300 hover:bg-violet-500 hover:shadow-violet-600/40 active:scale-[0.98]"
+          >
+            Iniciar Sesión
+          </button>
+        </form>
+
+        {/* Pie de tarjeta */}
+        <p className="mt-6 text-center text-xs text-slate-500">
+          ¿Aún no tienes una cuenta?{" "}
+          <Link
+            to="/registro"
+            className="font-semibold text-violet-400 hover:text-violet-300 transition-colors"
+          >
+            Regístrate aquí
+          </Link>
+        </p>
+      </div>
+    </div>
   );
 }
 
 function Registro() {
-  const [nombre, setNombre] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   async function handleRegistro(e: FormEvent) {
     e.preventDefault();
-    setError("");
+    setError('');
     try {
       await registrarUsuario({ nombre, email, password });
-      alert("¡Registro exitoso! Inicia sesión.");
-      navigate("/login");
+      alert('¡Registro exitoso! Inicia sesión.');
+      navigate('/login');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error en el registro");
+      setError(err instanceof Error ? err.message : 'Error en el registro');
     }
   }
 
   return (
-    <main className="mx-auto max-w-md p-6">
-      <h1 className="mb-4 text-2xl font-bold">Crear Cuenta</h1>
-      <form onSubmit={handleRegistro} className="grid gap-3">
-        <label>
-          Nombre{" "}
-          <input
-            required
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            className="block w-full rounded border px-3 py-2"
-          />
-        </label>
-        <label>
-          Email{" "}
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="block w-full rounded border px-3 py-2"
-          />
-        </label>
-        <label>
-          Contraseña (mín. 8 caracteres){" "}
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="block w-full rounded border px-3 py-2"
-          />
-        </label>
-        {error && <p className="text-red-600">{error}</p>}
-        <button
-          type="submit"
-          className="rounded bg-violet-600 px-4 py-2 text-white"
-        >
-          Registrarse
-        </button>
-      </form>
-    </main>
+    <div className="relative flex min-h-[85vh] items-center justify-center px-4">
+      {/* Destello de luz decorativo de fondo */}
+      <div className="pointer-events-none absolute -top-20 h-72 w-72 rounded-full bg-violet-600/15 blur-[120px]" />
+      
+      {/* Tarjeta 3D Flotante */}
+      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60 p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] backdrop-blur-2xl transition-all duration-500 hover:border-violet-500/30">
+        
+        {/* Encabezado */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600/10 border border-violet-500/20 text-2xl shadow-inner">
+            ✨
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Crea tu cuenta</h1>
+          <p className="mt-1 text-sm text-slate-400">Únete y comienza a comprar</p>
+        </div>
+
+        {/* Formulario */}
+        <form onSubmit={handleRegistro} className="grid gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Nombre completo</label>
+            <input 
+              required 
+              value={nombre} 
+              onChange={(e) => setNombre(e.target.value)} 
+              placeholder="Tu nombre"
+              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20" 
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Correo electrónico</label>
+            <input 
+              type="email" 
+              required 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              placeholder="tu@correo.com"
+              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20" 
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Contraseña</label>
+            <input 
+              type="password" 
+              required 
+              minLength={8} 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              placeholder="Mínimo 8 caracteres"
+              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20" 
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-center text-xs text-red-400">
+              {error}
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            className="mt-2 w-full rounded-xl bg-violet-600 py-3.5 text-sm font-semibold text-white shadow-xl shadow-violet-600/25 transition-all duration-300 hover:bg-violet-500 hover:shadow-violet-600/40 active:scale-[0.98]"
+          >
+            Registrarse
+          </button>
+        </form>
+
+        {/* Pie de tarjeta */}
+        <p className="mt-6 text-center text-xs text-slate-500">
+          ¿Ya tienes una cuenta?{' '}
+          <Link to="/login" className="font-semibold text-violet-400 hover:text-violet-300 transition-colors">
+            Inicia sesión aquí
+          </Link>
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -934,12 +1040,43 @@ export default function App() {
     <BrowserRouter>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Catalogo />} />
-        <Route path="/producto/:id" element={<Detalle />} />
-        <Route path="/carrito" element={<Carrito />} />
+        {/* Rutas públicas */}
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
-        <Route path="/admin" element={<AdminPanel />} />
+
+        {/* Rutas protegidas (exigen login) */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Catalogo />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/producto/:id"
+          element={
+            <ProtectedRoute>
+              <Detalle />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/carrito"
+          element={
+            <ProtectedRoute>
+              <Carrito />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminPanel />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

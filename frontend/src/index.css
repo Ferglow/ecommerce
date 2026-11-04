@@ -1,12 +1,26 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-primary: #7c3aed;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-primary: #8b5cf6;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 body {
   font-family: var(--font-sans);
-  background: #f8fafc;
-  color: #0f172a;
+  background-color: #030712; /* Un tono negro/azul pizarra muy profundo (slate-950) */
+  color: #f8fafc;
+  margin: 0;
+  padding: 0;
+}
+
+/* Efecto cristal sutil para scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #030712;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
 }

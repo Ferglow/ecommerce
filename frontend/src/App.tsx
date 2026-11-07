@@ -25,6 +25,7 @@ import {
   adminListarPedidos,
   adminCambiarEstado,
 } from "./lib/api";
+import { POSTerminal } from "./components/POSTerminal";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuth((s) => s.token);
@@ -1044,7 +1045,7 @@ export default function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <Catalogo />
+              <POSTerminal />
             </ProtectedRoute>
           }
         />

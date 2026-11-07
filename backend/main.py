@@ -91,6 +91,7 @@ def crear_pedido(datos: PedidoEntrada, db: Session = Depends(get_db), usuario=De
         )
 
     pedido = PedidoDB(
+        metodo_pago=datos.metodo_pago,
         nombre_cliente=datos.nombre_cliente,
         email_cliente=datos.email_cliente,
         estado="pendiente",

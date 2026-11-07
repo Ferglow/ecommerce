@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from typing import Literal 
 
 class Producto(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -23,6 +24,7 @@ class PedidoEntrada(BaseModel):
     nombre_cliente: str = Field(min_length=2, max_length=100)
     email_cliente: EmailStr
     items: list[ItemPedidoEntrada] = Field(min_length=1)
+    metodo_pago: Literal["efectivo", "tarjeta"] = "efectivo"
 
 class PedidoItemSalida(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -43,6 +45,7 @@ class PedidoSalida(BaseModel):
     total: Decimal
     creado_en: datetime
     items: list[PedidoItemSalida]
+    metodo_pago: str
 
 class UsuarioRegistro(BaseModel):
     nombre: str = Field(min_length=2, max_length=100)

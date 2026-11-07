@@ -26,6 +26,7 @@ class PedidoDB(Base):
     nombre_cliente: Mapped[str] = mapped_column(String, nullable=False)
     email_cliente: Mapped[str] = mapped_column(String, nullable=False)
     estado: Mapped[str] = mapped_column(String, default="pendiente", nullable=False)
+    metodo_pago: Mapped[str] = mapped_column(String(20), default="efectivo", nullable=False)
     total: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     creado_en: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

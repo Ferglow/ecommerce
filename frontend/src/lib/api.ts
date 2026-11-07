@@ -43,16 +43,20 @@ export async function crearPedido(datos: {
   nombre_cliente: string;
   email_cliente: string;
   items: { producto_id: number; cantidad: number }[];
+  metodo_pago?: "efectivo" | "tarjeta";
 }): Promise<PedidoCreado> {
   const token = localStorage.getItem("mitienda_token");
 
-  const response = await fetch(`${API_URL}/pedidos`, {
+ const response = await fetch(`${API_URL}/pedidos`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify(datos),
+    body: JSON.stringify({
+      ...datos,
+      metodo_pago: datos.metodo_pago ?? "efectivo",
+    }),
   });
 
   const resultado = await response.json();

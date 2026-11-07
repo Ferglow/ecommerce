@@ -8,7 +8,7 @@ import {
   Link,
   useParams,
 } from "react-router-dom";
-import { useProducto, useProductos } from "./hooks/useProducts";
+import { useProducto, } from "./hooks/useProducts";
 import { useCart } from "./store/cartStore";
 import { useAuth } from "./store/authStore";
 import { useNavigate, Navigate } from "react-router-dom";
@@ -34,43 +34,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
   return children;
 }
-interface ToastProps {
-  mensaje: string;
-  tipo?: "success" | "error";
-  onClose: () => void;
-}
 
-function Toast({ mensaje, tipo = "success", onClose }: ToastProps) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, [mensaje, onClose]);
-
-  return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/95 px-5 py-4 text-slate-100 shadow-2xl backdrop-blur-xl transition-all duration-300">
-      <span
-        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-          tipo === "success"
-            ? "bg-emerald-500/20 text-emerald-400"
-            : "bg-red-500/20 text-red-400"
-        }`}
-      >
-        {tipo === "success" ? "✓" : "✕"}
-      </span>
-      <span className="text-sm font-medium tracking-tight">{mensaje}</span>
-      <button
-        onClick={onClose}
-        className="ml-2 text-slate-400 hover:text-slate-200 transition-colors"
-      >
-        ×
-      </button>
-    </div>
-  );
-}
-
-const CATEGORIAS = ["todas", "tech", "ropa", "hogar"] as const;
 //Componentes
 function Navbar() {
   const count = useCart((s) => s.count());
@@ -150,126 +114,6 @@ function ErrorApi({
   );
 }
 
-function Catalogo() {
-  const add = useCart((s) => s.add);
-  const { data: products, loading, error, retry } = useProductos();
-  const [busqueda, setBusqueda] = useState("");
-  const [toast, setToast] = useState("");
-  const [categoria, setCategoria] =
-    useState<(typeof CATEGORIAS)[number]>("todas");
-
-  if (loading) {
-    return (
-      <main className="mx-auto max-w-5xl p-6">
-        <h1 className="mb-4 text-3xl font-bold">Catálogo</h1>
-        <Cargando mensaje="Cargando productos desde la API..." />
-      </main>
-    );
-  }
-
-  if (error) {
-    return (
-      <main className="mx-auto max-w-5xl p-6">
-        <h1 className="mb-4 text-3xl font-bold">Catálogo</h1>
-        <ErrorApi mensaje={error} onRetry={retry} />
-      </main>
-    );
-  }
-
-  const lista = products ?? [];
-  const filtrados = lista.filter(
-    (p) =>
-      p.nombre.toLowerCase().includes(busqueda.toLowerCase()) &&
-      (categoria === "todas" || p.categoria === categoria),
-  );
-
-  return (
-    <main className="mx-auto max-w-5xl p-6">
-      <h1 className="mb-4 text-3xl font-bold">Catálogo</h1>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
-        <input
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="Buscar producto... ej: laptop"
-          className="w-full rounded border px-4 py-2"
-        />
-        <div className="flex gap-2">
-          {CATEGORIAS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCategoria(c)}
-              className={`rounded-full px-4 py-2 text-sm ${
-                categoria === c ? "bg-slate-900 text-white" : "border bg-white"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-      </div>
-      {/*  Estilo de */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {filtrados.map((p) => (
-          <div
-            key={p.id}
-            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 p-5 shadow-2xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-violet-500/40 hover:bg-slate-900/80 hover:shadow-violet-500/10"
-          >
-            <div>
-              {/* Imagen / Emoji */}
-              <div className="relative mb-4 flex h-40 w-full items-center justify-center rounded-xl bg-slate-950/50 text-6xl border border-white/5 transition-transform duration-300 group-hover:scale-105">
-                <span aria-hidden>{p.imagen}</span>
-                <span className="absolute right-3 top-3 rounded-full bg-white/5 border border-white/10 px-2.5 py-1 text-[10px] font-bold tracking-wider text-slate-400 backdrop-blur-md">
-                  {p.categoria.toUpperCase()}
-                </span>
-              </div>
-
-              {/* Título y descripción */}
-              <Link
-                to={`/producto/${p.id}`}
-                className="block font-semibold tracking-tight text-slate-100 transition-colors hover:text-violet-400"
-              >
-                {p.nombre}
-              </Link>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-400 line-clamp-2">
-                {p.descripcion}
-              </p>
-            </div>
-
-            {/* Footer de la tarjeta */}
-            <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-4">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                  Precio
-                </span>
-                <span className="text-lg font-bold tracking-tight text-white">
-                  ${p.precio}
-                </span>
-              </div>
-              <button
-                onClick={() => {
-                  add(p);
-                  setToast(`¡${p.nombre} añadido al carrito!`);
-                }}
-                className="group/btn relative inline-flex items-center gap-1.5 overflow-hidden rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-violet-600/25 transition-all duration-300 hover:bg-violet-500 hover:shadow-violet-600/40 active:scale-95"
-              >
-                <span>Añadir</span>
-                <span className="transition-transform duration-300 group-hover/btn:translate-x-0.5">
-                  →
-                </span>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-      {filtrados.length === 0 && (
-        <p className="mt-6">
-          Sin resultados para "{busqueda}" en {categoria}
-        </p>
-      )}
-      {toast && <Toast mensaje={toast} onClose={() => setToast("")} />}
-    </main>
-  );
-}
 
 function Detalle() {
   const { id } = useParams();

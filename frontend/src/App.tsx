@@ -8,7 +8,7 @@ import {
   Link,
   useParams,
 } from "react-router-dom";
-import { useProducto, } from "./hooks/useProducts";
+import { useProducto } from "./hooks/useProducts";
 import { useCart } from "./store/cartStore";
 import { useAuth } from "./store/authStore";
 import { useNavigate, Navigate } from "react-router-dom";
@@ -42,11 +42,16 @@ function Navbar() {
   const { theme, toggleTheme } = useTheme();
   return (
     <nav className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-slate-950/80 px-6 py-4 text-slate-100 backdrop-blur-xl">
-      <Link to="/" className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30">🛒</span>
+      <Link
+        to="/"
+        className="text-xl font-bold tracking-tight text-white flex items-center gap-2"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30">
+          🛒
+        </span>
         MiTienda
       </Link>
-      
+
       <div className="flex items-center gap-4">
         {/* BOTÓN TOGGLE TEMA (Aquí es donde se usa toggleTheme y theme) */}
         <button
@@ -54,30 +59,55 @@ function Navbar() {
           aria-label="Cambiar tema"
           className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all"
         >
-          {theme === 'dark' ? '☀️' : '🌙'}
+          {theme === "dark" ? "☀️" : "🌙"}
         </button>
 
-        <Link to="/" className="transition-colors hover:text-white">Catálogo</Link>
+        <Link to="/" className="transition-colors hover:text-white">
+          Catálogo
+        </Link>
         {usuario?.rol === "admin" && (
-          <Link to="/admin" className="transition-colors hover:text-violet-400 font-semibold">
+          <Link
+            to="/admin"
+            className="transition-colors hover:text-violet-400 font-semibold"
+          >
             Admin
           </Link>
         )}
-        <Link to="/carrito" className="transition-colors hover:text-white flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
+        <Link
+          to="/carrito"
+          className="transition-colors hover:text-white flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full"
+        >
           <span>🛒 Carrito</span>
-          <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs text-white">{count}</span>
+          <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs text-white">
+            {count}
+          </span>
         </Link>
         {usuario ? (
           <div className="flex items-center gap-3 pl-2 border-l border-white/10">
-            <span className="text-xs text-slate-400">Hola, <strong className="text-slate-200">{usuario.nombre}</strong></span>
-            <button onClick={logout} className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition-colors">
+            <span className="text-xs text-slate-400">
+              Hola, <strong className="text-slate-200">{usuario.nombre}</strong>
+            </span>
+            <button
+              onClick={logout}
+              className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition-colors"
+            >
               Salir
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Link to="/login" className="px-3 py-1.5 text-slate-300 hover:text-white transition-colors">Entrar</Link>
-            <Link to="/registro" className="rounded-xl bg-violet-600 px-4 py-1.5 text-white shadow-lg shadow-violet-600/20 hover:bg-violet-500 transition-all">Registro</Link>
+            <Link
+              to="/login"
+              className="px-3 py-1.5 text-slate-300 hover:text-white transition-colors"
+            >
+              Entrar
+            </Link>
+            <Link
+              to="/registro"
+              className="rounded-xl bg-violet-600 px-4 py-1.5 text-white shadow-lg shadow-violet-600/20 hover:bg-violet-500 transition-all"
+            >
+              Registro
+            </Link>
           </div>
         )}
       </div>
@@ -113,7 +143,6 @@ function ErrorApi({
     </div>
   );
 }
-
 
 function Detalle() {
   const { id } = useParams();
@@ -526,6 +555,8 @@ function AdminPanel() {
   );
   const [nuevoPrecio, setNuevoPrecio] = useState("");
   const [nuevoStock, setNuevoStock] = useState("");
+  const [unidadEditando, setUnidadEditando] = useState<"pza" | "kg">("pza");
+  const [codigoBarrasEditando, setCodigoBarrasEditando] = useState("");
 
   // Formulario creación
   const [nombre, setNombre] = useState("");
@@ -535,6 +566,8 @@ function AdminPanel() {
   const [stock, setStock] = useState("10");
   const [descripcion, setDescripcion] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const [unidadMedida, setUnidadMedida] = useState<"pza" | "kg">("pza");
+  const [codigoBarras, setCodigoBarras] = useState("");
 
   const cargarPedidos = async () => {
     try {
@@ -592,12 +625,16 @@ function AdminPanel() {
         categoria,
         imagen,
         stock: Number(stock),
+        unidad_medida: unidadMedida,
+        codigo_barras: codigoBarras.trim() || null,
         descripcion,
       });
       setMensaje("¡Producto creado con éxito!");
       setNombre("");
       setPrecio("");
       setDescripcion("");
+      setUnidadMedida("pza");
+      setCodigoBarras("");
       cargarProductos();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al crear");
@@ -618,6 +655,8 @@ function AdminPanel() {
     setProductoEditando(p);
     setNuevoPrecio(String(p.precio));
     setNuevoStock(String(p.stock));
+    setUnidadEditando(p.unidad_medida ?? "pza");
+    setCodigoBarrasEditando(p.codigo_barras ?? "");
   }
 
   async function guardarEdicion(e: FormEvent) {
@@ -628,6 +667,8 @@ function AdminPanel() {
       await adminActualizarProducto(productoEditando.id, {
         precio: Number(nuevoPrecio),
         stock: Number(nuevoStock),
+        unidad_medida: unidadEditando,
+        codigo_barras: codigoBarrasEditando.trim() || null,
       });
       setProductoEditando(null);
       cargarProductos();
@@ -677,6 +718,19 @@ function AdminPanel() {
             </select>
           </label>
           <label>
+            Se vende por
+            <select
+              value={unidadMedida}
+              onChange={(event) =>
+                setUnidadMedida(event.target.value as "pza" | "kg")
+              }
+              className="block w-full rounded border px-3 py-2"
+            >
+              <option value="pza">Pieza</option>
+              <option value="kg">Kilogramo</option>
+            </select>
+          </label>
+          <label>
             Emoji / Imagen{" "}
             <input
               value={imagen}
@@ -688,9 +742,22 @@ function AdminPanel() {
             Stock{" "}
             <input
               type="number"
+              min="0"
+              step={unidadMedida === "kg" ? "0.001" : "1"}
               required
               value={stock}
               onChange={(e) => setStock(e.target.value)}
+              className="block w-full rounded border px-3 py-2"
+            />
+          </label>
+          <label>
+            Código de barras (opcional)
+            <input
+              value={codigoBarras}
+              onChange={(e) => setCodigoBarras(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.preventDefault();
+              }}
               className="block w-full rounded border px-3 py-2"
             />
           </label>
@@ -849,6 +916,28 @@ function AdminPanel() {
                   value={nuevoStock}
                   onChange={(e) => setNuevoStock(e.target.value)}
                   className="block w-full rounded border px-3 py-2 mt-1"
+                  step={unidadEditando === "kg" ? "0.001" : "1"}
+                />
+              </label>
+              <label>
+                Se vende por
+                <select
+                  value={unidadEditando}
+                  onChange={(e) =>
+                    setUnidadEditando(e.target.value as "pza" | "kg")
+                  }
+                  className="mt-1 block w-full rounded border px-3 py-2"
+                >
+                  <option value="pza">Pieza</option>
+                  <option value="kg">Kilogramo</option>
+                </select>
+              </label>
+              <label>
+                Código de barras (opcional)
+                <input
+                  value={codigoBarrasEditando}
+                  onChange={(e) => setCodigoBarrasEditando(e.target.value)}
+                  className="mt-1 block w-full rounded border px-3 py-2"
                 />
               </label>
 

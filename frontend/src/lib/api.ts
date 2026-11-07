@@ -37,6 +37,7 @@ export interface PedidoCreado {
   id: number;
   total: number | string;
   estado: string;
+  metodo_pago: "efectivo" | "tarjeta"
 }
 
 export async function crearPedido(datos: {

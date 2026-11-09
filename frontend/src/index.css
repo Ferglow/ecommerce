@@ -120,7 +120,4 @@ body {
   background: var(--pos-overlay);
 }
 
-html.light input,
-html.light select {
-  color: var(--pos-text);
-}
+

@@ -9,7 +9,7 @@ interface ThemeState {
 export const useTheme = create<ThemeState>()(
   persist(
     (set, get) => ({
-      theme: 'dark',
+      theme: 'light',
       toggleTheme: () => {
         const newTheme = get().theme === 'dark' ? 'light' : 'dark';
         if (newTheme === 'dark') {
@@ -26,7 +26,7 @@ export const useTheme = create<ThemeState>()(
       name: 'mitienda-theme',
       onRehydrateStorage: () => (state) => {
         // Al cargar la app, aplica la clase guardada
-        if (state?.theme === 'light') {
+        if (state?.theme !== 'dark') {
           document.documentElement.classList.remove('dark');
           document.documentElement.classList.add('light');
         } else {

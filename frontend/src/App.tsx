@@ -37,77 +37,53 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 //Componentes
 function Navbar() {
-  const count = useCart((s) => s.count());
   const { usuario, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   return (
-    <nav className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-slate-950/80 px-6 py-4 text-slate-100 backdrop-blur-xl">
-      <Link
-        to="/"
-        className="text-xl font-bold tracking-tight text-white flex items-center gap-2"
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30">
-          🛒
+    <nav className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 text-slate-700 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/90 dark:text-slate-200 sm:px-6">
+      <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/30 dark:bg-violet-600/20 dark:text-violet-300">
+          POS
         </span>
         MiTienda
       </Link>
 
-      <div className="flex items-center gap-4">
-        {/* BOTÓN TOGGLE TEMA (Aquí es donde se usa toggleTheme y theme) */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
         <button
           onClick={toggleTheme}
-          aria-label="Cambiar tema"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all"
+          aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+          title={theme === "dark" ? "Modo claro" : "Modo oscuro"}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-violet-300 hover:text-violet-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:text-white"
         >
           {theme === "dark" ? "☀️" : "🌙"}
         </button>
 
-        <Link to="/" className="transition-colors hover:text-white">
-          Catálogo
-        </Link>
-        {usuario?.rol === "admin" && (
-          <Link
-            to="/admin"
-            className="transition-colors hover:text-violet-400 font-semibold"
-          >
-            Admin
+        {usuario && (
+          <Link to="/" className="rounded-lg bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
+            Caja
           </Link>
         )}
-        <Link
-          to="/carrito"
-          className="transition-colors hover:text-white flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full"
-        >
-          <span>🛒 Carrito</span>
-          <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs text-white">
-            {count}
-          </span>
-        </Link>
+        {usuario?.rol === "admin" && (
+          <Link to="/admin" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-violet-700 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-violet-300">
+            Backoffice
+          </Link>
+        )}
         {usuario ? (
-          <div className="flex items-center gap-3 pl-2 border-l border-white/10">
-            <span className="text-xs text-slate-400">
-              Hola, <strong className="text-slate-200">{usuario.nombre}</strong>
+          <div className="flex items-center gap-2 border-l border-slate-200 pl-3 dark:border-white/10 sm:gap-3 sm:pl-4">
+            <span className="hidden text-sm text-slate-500 dark:text-slate-400 sm:inline">
+              {usuario.nombre}
             </span>
             <button
               onClick={logout}
-              className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/20 transition-colors"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-white/10 dark:text-slate-300 dark:hover:border-red-500/20 dark:hover:bg-red-500/10 dark:hover:text-red-300"
             >
               Salir
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Link
-              to="/login"
-              className="px-3 py-1.5 text-slate-300 hover:text-white transition-colors"
-            >
-              Entrar
-            </Link>
-            <Link
-              to="/registro"
-              className="rounded-xl bg-violet-600 px-4 py-1.5 text-white shadow-lg shadow-violet-600/20 hover:bg-violet-500 transition-all"
-            >
-              Registro
-            </Link>
+            <Link to="/login" className="px-3 py-2 text-sm text-slate-600 hover:text-violet-700 dark:text-slate-300 dark:hover:text-white">Entrar</Link>
+            <Link to="/registro" className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">Registro</Link>
           </div>
         )}
       </div>

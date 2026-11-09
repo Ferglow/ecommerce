@@ -432,16 +432,16 @@ function Registro() {
       <div className="pointer-events-none absolute -top-20 h-72 w-72 rounded-full bg-violet-600/15 blur-[120px]" />
 
       {/* Tarjeta 3D Flotante */}
-      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60 p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] backdrop-blur-2xl transition-all duration-500 hover:border-violet-500/30">
+      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white/95 p-8 shadow-xl shadow-slate-900/10 backdrop-blur-2xl transition-all duration-500 hover:border-violet-300 dark:border-white/10 dark:bg-slate-950/60 dark:shadow-black/40">
         {/* Encabezado */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600/10 border border-violet-500/20 text-2xl shadow-inner">
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white/95 p-8 shadow-xl shadow-slate-900/10 backdrop-blur-2xl transition-all duration-500 hover:border-violet-300 dark:border-white/10 dark:bg-slate-950/60 dark:shadow-black/40">
             ✨
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Crea tu cuenta
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Únete y comienza a comprar
           </p>
         </div>
@@ -457,7 +457,7 @@ function Registro() {
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Tu nombre"
-              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:placeholder-slate-500"
             />
           </div>
 
@@ -471,12 +471,12 @@ function Registro() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@correo.com"
-              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:placeholder-slate-500"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Contraseña
             </label>
             <input
@@ -486,7 +486,7 @@ function Registro() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mínimo 8 caracteres"
-              className="w-full rounded-xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none transition-all focus:border-violet-500 focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/20"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:placeholder-slate-500"
             />
           </div>
 
